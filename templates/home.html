@@ -11,6 +11,25 @@
             <a href="{% url 'join_project' %}" class="btn btn-secondary">Join a New Project</a>
         </div>
 
+        <!-- Overdue Tickets Section -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-danger text-light">
+                        <h2 class="text-light">Overdue Tickets</h2>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% for ticket in overdue_tickets %}
+                            <li class="list-group-item">
+                                <a href="{% url 'ticket_detail' pk=ticket.id %}">{{ ticket.title }}</a> - Deadline: {{ ticket.deadline|date:"Y-m-d" }}
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item">No overdue tickets.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
         <div class="row">
             <div class="col-md-6">
                 <div class="card mb-4">
@@ -76,6 +95,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

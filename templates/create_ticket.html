@@ -60,6 +60,11 @@
                     <input type="date" id="{{ form.end_date.id_for_label }}" name="{{ form.end_date.html_name }}" class="form-control" value="{{ form.end_date.value|default_if_none:'' }}" />
                 </div>
 
+                <div class="mb-3">
+                    <label for="{{ form.end_date.id_for_label }}" class="form-label">Deadline</label>
+                    <input type="date" id="{{ form.deadline.id_for_label }}" name="{{ form.deadline.html_name }}" class="form-control" value="{{ form.deadline.value|default_if_none:'' }}" />
+                </div>
+
                 <!-- Attachments Field -->
                 <div class="mb-4">
                     <label class="form-label">Attachments</label>

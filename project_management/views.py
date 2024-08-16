@@ -7,8 +7,10 @@ from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category
 from django.contrib.auth.decorators import login_required
-from .forms import JoinProjectForm, TicketForm, CommentForm, CategoryForm
+from .forms import JoinProjectForm, TicketForm, CommentForm, CategoryForm, TicketSearchForm
 from django.db.models import Count
+import datetime
+
 
 @login_required
 def home(request):
@@ -41,11 +43,18 @@ def home(request):
         project_id__in=project_ids
     ).order_by('-updated_at')[:10]  # `updated_at` フィールドが必要です
 
+    # 期限が過ぎたチケットを取得
+    overdue_tickets = Ticket.objects.filter(
+        assignee=user,
+        deadline__lt=datetime.date.today()
+    )
+
     context = {
         'user_projects': user_projects,
         'favorite_tickets': favorite_tickets,
         'status_counts': status_counts,
         'updates': updates,  # 追加: 最新10件の更新履歴
+        'overdue_tickets': overdue_tickets,  # 追加: 期限が過ぎたチケット
     }
     return render(request, 'home.html', context)
 
@@ -125,20 +134,47 @@ class JoinProjectView(CreateView):
         form.instance.user = self.request.user
         return super().form_valid(form)
 
-
 class TicketListView(ListView):
     model = Ticket
     template_name = 'ticket_list.html'
     context_object_name = 'tickets'
+    form_class = TicketSearchForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        project = get_object_or_404(Project, pk=self.kwargs['pk'])
-        context['project'] = project
+        context['project'] = get_object_or_404(Project, pk=self.kwargs['pk'])
+        context['form'] = self.get_form()
         return context
 
+    def get_form(self):
+        return self.form_class(self.request.GET or None)
+
     def get_queryset(self):
-        return Ticket.objects.filter(project_id=self.kwargs['pk'])
+        queryset = Ticket.objects.filter(project_id=self.kwargs['pk'])
+        form = self.get_form()
+
+        if form.is_valid():
+            title = form.cleaned_data.get('title')
+            status = form.cleaned_data.get('status')
+            category = form.cleaned_data.get('category')
+            start_date = form.cleaned_data.get('start_date')
+            end_date = form.cleaned_data.get('end_date')
+            deadline = form.cleaned_data.get('deadline')
+            
+            if title:
+                queryset = queryset.filter(title__icontains=title)
+            if status:
+                queryset = queryset.filter(status_id=status)
+            if category:
+                queryset = queryset.filter(category__icontains=category)
+            if start_date:
+                queryset = queryset.filter(start_date__gte=start_date)
+            if end_date:
+                queryset = queryset.filter(end_date__lte=end_date)
+            if deadline:
+                queryset = queryset.filter(deadline__lte=deadline)
+
+        return queryset
 
 class TicketCreateView(CreateView):
     model = Ticket

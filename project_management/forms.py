@@ -21,13 +21,17 @@ class CommentForm(forms.ModelForm):
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ['title', 'detail', 'status_id', 'assignee', 'category', 'start_date', 'end_date']
+        fields = ['title', 'detail', 'status_id', 'assignee', 'category', 'start_date', 'end_date', 'deadline']
 
     def __init__(self, *args, **kwargs):
         project = kwargs.pop('project', None)
         super().__init__(*args, **kwargs)
         if project:
             self.fields['category'].queryset = Category.objects.filter(project=project)
+        if self.instance:
+            self.fields['start_date'].initial = self.instance.start_date
+            self.fields['end_date'].initial = self.instance.end_date
+            self.fields['deadline'].initial = self.instance.deadline
 
 class TicketAttachmentForm(forms.ModelForm):
     class Meta:
@@ -47,3 +51,11 @@ class CategoryForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if project_id:
             self.fields['project'].initial = project_id
+
+class TicketSearchForm(forms.Form):
+    title = forms.CharField(required=False, label='Title')
+    status = forms.ChoiceField(choices=[('', 'Any')] + list(Ticket.STATUS_CHOICES), required=False, label='Status')
+    category = forms.CharField(required=False, label='Category')
+    start_date = forms.DateField(required=False, widget=forms.TextInput(attrs={'type': 'date'}), label='Start Date')
+    end_date = forms.DateField(required=False, widget=forms.TextInput(attrs={'type': 'date'}), label='End Date')
+    deadline = forms.DateField(required=False, widget=forms.TextInput(attrs={'type': 'date'}), label='Deadline')

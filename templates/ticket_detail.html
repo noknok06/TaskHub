@@ -26,6 +26,7 @@
                     <p class="card-text"><strong>Category:</strong> {{ ticket.category.name }}</p>
                     <p class="card-text"><strong>Start Date:</strong> {{ ticket.start_date }}</p>
                     <p class="card-text"><strong>End Date:</strong> {{ ticket.end_date }}</p>
+                    <p class="card-text"><strong>Deadline:</strong> {{ ticket.deadline }}</p>
                     <p class="card-text"><strong>Project:</strong> {{ ticket.project.name }}</p>
                     <a href="{% url 'edit_ticket' pk=ticket.id %}" class="btn btn-primary">Edit Ticket</a>
                 </div>
@@ -54,7 +55,7 @@
                     {% if comment.attachment_file %}
                     <p><strong>Attachment:</strong> <a href="{{ comment.attachment_file.url }}" target="_blank">{{ comment.attachment_file.name }}</a></p>
                     {% endif %}
-                    <p><strong>Posted by:</strong> {{ comment.user.get_full_name }} on {{ comment.create_date }}</p>
+                    <p><strong>Posted by:</strong> {{ comment.user.name }} on {{ comment.create_date }}</p>
                 </div>
                 {% empty %}
                 <div class="list-group-item">No comments available.</div>
