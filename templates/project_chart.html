@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>{{ project.name }} - Gantt Chart</h2>
+
+    <!-- ガントチャート用のSVG -->
+    <div class="gantt-wrap">
+        <svg id="gantt"></svg>
+    </div>
+
+    <!-- Frappe GanttのCSSとスクリプト -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.min.js"></script>
+
+    <script>
+        window.onload = function() {
+            try {
+                // JSON データを取得し、パースする
+                const chartData = JSON.parse('{{ chart_data|escapejs }}');
+                console.log(chartData); // データを確認するためのログ
+    
+                // Frappe Gantt用のタスクデータに変換
+                const tasks = chartData.map(ticket => ({
+                    id: ticket.title,
+                    name: ticket.title,
+                    start: ticket.start,
+                    end: ticket.end,
+                    progress: 0  // 進捗はデフォルトで0に設定
+                }));
+    
+                // ガントチャートの作成
+                const gantt = new Gantt("#gantt", tasks, {
+                    view_mode: 'Day',
+                    date_format: 'YYYY-MM-DD',
+                    custom_popup_html: function(task) {
+                        return `
+                            <div class="popover-header">${task.name}</div>
+                            <div class="popover-body">
+                                <p>Start: ${task.start}</p>
+                                <p>End: ${task.end}</p>
+                            </div>
+                        `;
+                    },
+                    on_date_change: function(task, start, end) {
+                        console.log(`${task.name}: changed start date to ${start} and end date to ${end}`);
+                        updateTaskInDatabase(task.id, start, end);
+                    },
+                    on_progress_change: function(task, progress) {
+                        console.log(`${task.name}: changed progress to ${progress}%`);
+                        updateTaskProgressInDatabase(task.id, progress);
+                    }
+                });
+    
+                function updateTaskInDatabase(taskId, startDate, endDate) {
+                    // Date オブジェクトを ISO 形式の文字列に変換
+                    const startDateString = new Date(startDate).toISOString().split('T')[0];
+                    const endDateString = new Date(endDate).toISOString().split('T')[0];
+                    
+                    fetch('/update-task/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({
+                            id: taskId,
+                            start_date: startDateString,
+                            end_date: endDateString
+                        })
+                    })
+                    .then(response => response.json())
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while updating the task.');
+                    });
+                }
+    
+                function updateTaskProgressInDatabase(taskId, progress) {
+                    fetch('/update-task-progress/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken  // CSRFトークンをここで使用
+                        },
+                        body: JSON.stringify({
+                            id: taskId,
+                            progress: progress
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Task progress updated:', data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+    
+                // CSRFトークンをテンプレートから直接渡す
+                const csrfToken = '{{ csrf_token }}';
+            } catch (error) {
+                console.error("Error parsing chart data:", error);
+            }
+        };
+    </script>
+    
+</div>
+{% endblock %}

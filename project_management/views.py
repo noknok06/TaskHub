@@ -4,12 +4,16 @@ from .forms import ProjectForm
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView, DetailView
+from django.views.decorators.http import require_POST
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category
 from django.contrib.auth.decorators import login_required
 from .forms import JoinProjectForm, TicketForm, CommentForm, CategoryForm, TicketSearchForm
 from django.db.models import Count
-import datetime
+import datetime, json
+from django.utils.dateparse import parse_date
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 
 @login_required
@@ -271,3 +275,68 @@ class TicketUpdateView(UpdateView):
     def get_success_url(self):
         # 編集後のリダイレクト先をチケット詳細ページに設定
         return reverse_lazy('ticket_detail', kwargs={'pk': self.object.pk})
+
+class ProjectChartView(DetailView):
+    model = Project
+    template_name = 'project_chart.html'
+    context_object_name = 'project'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.object
+
+        # プロジェクトに関連するチケットを取得
+        tickets = Ticket.objects.filter(project=project).order_by('start_date')
+        
+        # ガントチャート用のデータを JSON 形式に変換
+        chart_data = [
+            {
+                'title': ticket.title,
+                'start': ticket.start_date.isoformat(),
+                'end': ticket.end_date.isoformat()
+            }
+            for ticket in tickets
+        ]
+        context['chart_data'] = json.dumps(chart_data)  # JSON 形式でデータを渡す
+        return context
+@csrf_exempt
+@require_POST
+def update_task(request):
+    import json
+    data = json.loads(request.body)
+    ticket_id = data.get('id')
+    start_date = data.get('start_date')
+    # 文字列をdatetimeオブジェクトに変換
+    date_obj = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+    # 1日進める
+    new_date_obj = date_obj + datetime.timedelta(days=1)
+    # 再び文字列に戻す
+    start_date = new_date_obj.strftime("%Y-%m-%d")
+    end_date = data.get('end_date')
+    
+    # チケットの更新
+    try:
+        ticket = Ticket.objects.get(title=ticket_id)
+        ticket.start_date = start_date
+        ticket.end_date = end_date
+        ticket.save()
+        return JsonResponse({'status': 'success'})
+    except Ticket.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Ticket not found'})
+
+@csrf_exempt
+@require_POST
+def update_task_progress(request):
+    import json
+    data = json.loads(request.body)
+    ticket_id = data.get('id')
+    progress = data.get('progress')
+    
+    # チケットの進捗更新
+    try:
+        ticket = Ticket.objects.get(id=ticket_id)
+        ticket.progress = progress
+        ticket.save()
+        return JsonResponse({'status': 'success'})
+    except Ticket.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Ticket not found'})
