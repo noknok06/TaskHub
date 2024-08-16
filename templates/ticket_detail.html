@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Ticket Detail{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <h2 class="my-4">Ticket Details: {{ ticket.title }}</h2>
+
+            <!-- Ticket Details -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{{ ticket.title }}</h5>
+                    <p class="card-text"><strong>Description:</strong> {{ ticket.detail }}</p>
+                    <p class="card-text"><strong>Status:</strong> 
+                        {% if ticket.status_id == 10 %}未処理
+                        {% elif ticket.status_id == 20 %}保留
+                        {% elif ticket.status_id == 30 %}確認中
+                        {% elif ticket.status_id == 40 %}処理中
+                        {% elif ticket.status_id == 50 %}完了
+                        {% else %}不明
+                        {% endif %}
+                    </p>
+                    <p class="card-text"><strong>Assignee:</strong> {{ ticket.assignee.name }}</p>
+                    <p class="card-text"><strong>Category:</strong> {{ ticket.category.name }}</p>
+                    <p class="card-text"><strong>Start Date:</strong> {{ ticket.start_date }}</p>
+                    <p class="card-text"><strong>End Date:</strong> {{ ticket.end_date }}</p>
+                    <p class="card-text"><strong>Project:</strong> {{ ticket.project.name }}</p>
+                    <a href="{% url 'edit_ticket' pk=ticket.id %}" class="btn btn-primary">Edit Ticket</a>
+                </div>
+            </div>
+
+            <!-- Attachments Section -->
+            <h3 class="my-4">Attachments:</h3>
+            {% if ticket.attachments.all %}
+            <ul class="list-group mb-4">
+                {% for attachment in ticket.attachments.all %}
+                <li class="list-group-item">
+                    <a href="{{ attachment.attachment_file.url }}" target="_blank">{{ attachment.attachment_file.name }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No attachments available.</p>
+            {% endif %}
+
+            <!-- Comments Section -->
+            <h3 class="my-4">Comments:</h3>
+            <div class="list-group mb-4">
+                {% for comment in ticket.ticketcomment_set.all %}
+                <div class="list-group-item">
+                    <p><strong>Comment:</strong> {{ comment.comment }}</p>
+                    {% if comment.attachment_file %}
+                    <p><strong>Attachment:</strong> <a href="{{ comment.attachment_file.url }}" target="_blank">{{ comment.attachment_file.name }}</a></p>
+                    {% endif %}
+                    <p><strong>Posted by:</strong> {{ comment.user.get_full_name }} on {{ comment.create_date }}</p>
+                </div>
+                {% empty %}
+                <div class="list-group-item">No comments available.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Favorites Section -->
+        <div class="col-md-4">
+            <h3 class="my-4">Favorites:</h3>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" name="is_favorite" value="{% if is_favorite %}false{% else %}true{% endif %}" class="btn btn-light">
+                    <span class="fs-3">
+                        {% if is_favorite %}
+                            &#9733;  <!-- Filled star -->
+                        {% else %}
+                            &#9734;  <!-- Empty star -->
+                        {% endif %}
+                    </span>
+                    {% if is_favorite %}
+                        Remove from Favorites
+                    {% else %}
+                        Add to Favorites
+                    {% endif %}
+                </button>
+            </form>
+            <!-- Add Comment Form -->
+            <h3 class="my-4">Add a Comment:</h3>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" name="comment_form" class="btn btn-primary">Add Comment</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Join Project{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header bg-dark text-light">
+            <h3 class="mb-0">Join Project Form</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" class="mb-3">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary mt-3">Join Project</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

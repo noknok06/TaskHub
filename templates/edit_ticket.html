@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Ticket{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h2>Create Ticket</h2>
+    <div class="card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                
+                <h3 class="my-4">Attachments</h3>
+                {{ attachments.management_form }}
+                <div id="attachment-forms">
+                    {% for form in attachments %}
+                        <div class="form-group">
+                            {{ form.attachment_file.label_tag }}
+                            {{ form.attachment_file }}
+                            {% if form.instance.pk %}
+                                <a href="{{ form.instance.attachment_file.url }}">{{ form.instance.attachment_file.name }}</a>
+                            {% endif %}
+                            {{ form.DELETE }}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="btn btn-primary">Create Ticket</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

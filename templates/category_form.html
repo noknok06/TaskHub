@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Create New Category{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="my-4">Create New Category</h2>
+    <div class="card">
+        <div class="card-header bg-dark text-light">
+            <h3 class="mb-0">New Category Form</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary mt-3">Create</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

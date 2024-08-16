@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project Detail</title>
+</head>
+<body>
+    <h2>{{ project.name }}</h2>
+    <p>{{ project.description }}</p>
+    <p>Start Date: {{ project.start_date }}</p>
+    <p>End Date: {{ project.end_date }}</p>
+
+    <h3>Tickets for this Project</h3>
+    <a href="{% url 'ticket_create' project.id %}">Create a New Ticket</a>
+    <ul>
+        {% for ticket in tickets %}
+            <li>
+                <a href="{% url 'ticket_detail' pk=ticket.id %}">{{ ticket.title }}</a> - {{ ticket.status_id }}
+                <!-- Add Edit link -->
+                <a href="{% url 'ticket_edit' pk=ticket.id %}">Edit</a>
+            </li>
+        {% empty %}
+            <li>No tickets available for this project.</li>
+        {% endfor %}
+    </ul>
+
+    <!-- コメントの一覧を表示する場合 -->
+    <h3>Comments</h3>
+    <ul>
+        {% for comment in comments %}
+            <li>
+                {{ comment.user }}: {{ comment.comment }} 
+                {% if comment.attachment_file %}
+                    <a href="{{ comment.attachment_file.url }}">Download attachment</a>
+                {% endif %}
+            </li>
+        {% empty %}
+            <li>No comments for this ticket.</li>
+        {% endfor %}
+    </ul>
+
+    <!-- ホームに戻るボタン -->
+    <a href="{% url 'home' %}">Back to Home</a>
+</body>
+</html>
