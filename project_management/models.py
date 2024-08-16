@@ -72,6 +72,7 @@ class Ticket(models.Model):
     end_date = models.DateField()
     project = models.ForeignKey(Project, on_delete=models.CASCADE)  # Add this line
     updated_at = models.DateTimeField(auto_now=True)  # 更新日時
+    deadline = models.DateField()
 
     def __str__(self):
         return self.title
@@ -79,6 +80,17 @@ class Ticket(models.Model):
     def __str__(self):
         return self.title
         
+class TicketComment(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
+    comment = models.TextField()
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)  # 修正: CustomUser への外部キー
+    attachment_file = models.FileField(upload_to='comment_attachments/', blank=True, null=True)
+    create_date = models.DateTimeField(auto_now_add=True)
+
+class TicketFavorite(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)  # 修正: CustomUser への外部キー
+
 class Attachment(models.Model):
     ticket = models.ForeignKey(Ticket, related_name='attachments', on_delete=models.CASCADE)
     attachment_file = models.FileField(upload_to='attachments/')
@@ -93,13 +105,3 @@ class Category(models.Model):
     def __str__(self):
         return self.name
         
-class TicketComment(models.Model):
-    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
-    comment = models.TextField()
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)  # 修正: CustomUser への外部キー
-    attachment_file = models.FileField(upload_to='comment_attachments/', blank=True, null=True)
-    create_date = models.DateTimeField(auto_now_add=True)
-
-class TicketFavorite(models.Model):
-    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)  # 修正: CustomUser への外部キー
