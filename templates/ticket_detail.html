@@ -11,24 +11,55 @@
             <!-- Ticket Details -->
             <div class="card mb-4">
                 <div class="card-body">
-                    <h5 class="card-title">{{ ticket.title }}</h5>
-                    <p class="card-text"><strong>Description:</strong> {{ ticket.detail }}</p>
-                    <p class="card-text"><strong>Status:</strong> 
-                        {% if ticket.status_id == 10 %}未処理
-                        {% elif ticket.status_id == 20 %}保留
-                        {% elif ticket.status_id == 30 %}確認中
-                        {% elif ticket.status_id == 40 %}処理中
-                        {% elif ticket.status_id == 50 %}完了
-                        {% else %}不明
-                        {% endif %}
-                    </p>
-                    <p class="card-text"><strong>Assignee:</strong> {{ ticket.assignee.name }}</p>
-                    <p class="card-text"><strong>Category:</strong> {{ ticket.category.name }}</p>
-                    <p class="card-text"><strong>Start Date:</strong> {{ ticket.start_date }}</p>
-                    <p class="card-text"><strong>End Date:</strong> {{ ticket.end_date }}</p>
-                    <p class="card-text"><strong>Deadline:</strong> {{ ticket.deadline }}</p>
-                    <p class="card-text"><strong>Project:</strong> {{ ticket.project.name }}</p>
-                    <a href="{% url 'edit_ticket' pk=ticket.id %}" class="btn btn-primary">Edit Ticket</a>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Title:</strong></div>
+                        <div class="col-md-9">{{ ticket.title }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Description:</strong></div>
+                        <div class="col-md-9">{{ ticket.detail | linebreaksbr }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Status:</strong></div>
+                        <div class="col-md-9">
+                            {% if ticket.status_id == 10 %}未処理
+                            {% elif ticket.status_id == 20 %}保留
+                            {% elif ticket.status_id == 30 %}確認中
+                            {% elif ticket.status_id == 40 %}処理中
+                            {% elif ticket.status_id == 50 %}完了
+                            {% else %}不明
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Assignee:</strong></div>
+                        <div class="col-md-9">{{ ticket.assignee.name }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Category:</strong></div>
+                        <div class="col-md-9">{{ ticket.category.name }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Start Date:</strong></div>
+                        <div class="col-md-9">{{ ticket.start_date }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>End Date:</strong></div>
+                        <div class="col-md-9">{{ ticket.end_date }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Deadline:</strong></div>
+                        <div class="col-md-9">{{ ticket.deadline }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Project:</strong></div>
+                        <div class="col-md-9">{{ ticket.project.name }}</div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <a href="{% url 'edit_ticket' pk=ticket.id %}" class="btn btn-primary">Edit Ticket</a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -51,11 +82,20 @@
             <div class="list-group mb-4">
                 {% for comment in ticket.ticketcomment_set.all %}
                 <div class="list-group-item">
-                    <p><strong>Comment:</strong> {{ comment.comment }}</p>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Comment:</strong></div>
+                        <div class="col-md-9">{{ comment.comment }}</div>
+                    </div>
                     {% if comment.attachment_file %}
-                    <p><strong>Attachment:</strong> <a href="{{ comment.attachment_file.url }}" target="_blank">{{ comment.attachment_file.name }}</a></p>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Attachment:</strong></div>
+                        <div class="col-md-9"><a href="{{ comment.attachment_file.url }}" target="_blank">{{ comment.attachment_file.name }}</a></div>
+                    </div>
                     {% endif %}
-                    <p><strong>Posted by:</strong> {{ comment.user.name }} on {{ comment.create_date }}</p>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Posted by:</strong></div>
+                        <div class="col-md-9">{{ comment.user.name }} on {{ comment.create_date }}</div>
+                    </div>
                 </div>
                 {% empty %}
                 <div class="list-group-item">No comments available.</div>

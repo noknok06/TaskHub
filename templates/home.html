@@ -3,157 +3,201 @@
 {% block title %}Project Management Dashboard{% endblock %}
 
 {% block content %}
-    <div class="container-fluid">
-        <h1 class="mb-4">Welcome to the Project Management Dashboard</h1>
-        
-        <div class="mb-4">
-            <a href="{% url 'create_project' %}" class="btn btn-primary me-2">Create a New Project</a>
-            <a href="{% url 'join_project' %}" class="btn btn-secondary">Join a New Project</a>
-        </div>
+<div class="container-fluid">
+    <h1 class="mb-4">Welcome to the Project Management Dashboard</h1>
 
-        <!-- Overdue Tickets Section -->
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card mb-4">
-                    <div class="card-header bg-danger text-light">
-                        <h2 class="text-light">Overdue Tickets</h2>
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        {% for ticket in overdue_tickets %}
-                            <li class="list-group-item">
-                                <a href="{% url 'ticket_detail' pk=ticket.id %}">{{ ticket.title }}</a> - Deadline: {{ ticket.deadline|date:"Y-m-d" }}
-                            </li>
-                        {% empty %}
-                            <li class="list-group-item">No overdue tickets.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-header bg-dark text-light">
-                        <h2 class="text-light">Your Projects</h2>
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        {% for user_project in user_projects %}
-                            <li class="list-group-item">
-                                <a href="{% url 'ticket_list' user_project.project.id %}">{{ user_project.project.name }}</a>
-                            </li>
-                        {% empty %}
-                            <li class="list-group-item">No projects available.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-header bg-dark text-light">
-                        <h2 class="text-light">Your Favorite Tickets</h2>
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        {% for favorite in favorite_tickets %}
-                            <li class="list-group-item">
-                                <a href="{% url 'ticket_detail' pk=favorite.ticket.id %}">{{ favorite.ticket.title }}</a> - Status: {{ favorite.ticket.get_status_id_display }}
-                            </li>
-                        {% empty %}
-                            <li class="list-group-item">No favorite tickets.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-header bg-dark text-light">
-                        <h2 class="text-light">Recent Ticket Updates</h2>
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        {% for ticket in updates %}
-                            <li class="list-group-item">
-                                <a href="{% url 'ticket_detail' pk=ticket.id %}">{{ ticket.title }}</a> - Last updated on {{ ticket.updated_at|date:"Y-m-d H:i" }}
-                            </li>
-                        {% empty %}
-                            <li class="list-group-item">No recent updates.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-header bg-dark text-light">
-                        <h2 class="text-light">Your Ticket Status Distribution</h2>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="statusChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+    <div class="mb-4">
+        <a href="{% url 'create_project' %}" class="btn btn-primary me-2">Create a New Project</a>
+        <a href="{% url 'join_project' %}" class="btn btn-secondary">Join a New Project</a>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const ctx = document.getElementById('statusChart').getContext('2d');
-        const statusCounts = {{ status_counts|safe }};
-        const labels = ['未処理', '保留', '確認中', '処理中', '完了'];
-        const data = {
-            labels: labels,
-            datasets: [{
-                label: 'Ticket Status Distribution',
-                data: [
-                    statusCounts[10],
-                    statusCounts[20],
-                    statusCounts[30],
-                    statusCounts[40],
-                    statusCounts[50]
-                ],
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)'
-                ],
-                borderWidth: 1
-            }]
-        };
-        const config = {
-            type: 'pie',
-            data: data,
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (label) {
-                                    label += ': ' + context.raw;
-                                }
-                                return label;
+    <!-- Overdue Tickets Section -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-light">
+                    <h2 class="text-light">Overdue Tickets</h2>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for ticket in overdue_tickets %}
+                    <li class="list-group-item">
+                        <a href="{% url 'ticket_detail' pk=ticket.id %}">{{ ticket.title }}</a> - Deadline: {{
+                        ticket.deadline|date:"Y-m-d" }}
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item">No overdue tickets.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-light">
+                    <h2 class="text-light">Your Projects</h2>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for user_project in user_projects %}
+                    <li class="list-group-item">
+                        <a href="{% url 'ticket_list' user_project.project.id %}">{{ user_project.project.name }}</a>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item">No projects available.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-light">
+                    <h2 class="text-light">Your Favorite Tickets</h2>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for favorite in favorite_tickets %}
+                    <li class="list-group-item">
+                        <a href="{% url 'ticket_detail' pk=favorite.ticket.id %}">{{ favorite.ticket.title }}</a> -
+                        Status: {{ favorite.ticket.get_status_id_display }}
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item">No favorite tickets.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-light">
+                    <h2 class="text-light">Recent Ticket Updates</h2>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for ticket in updates %}
+                    <li class="list-group-item">
+                        <a href="{% url 'ticket_detail' pk=ticket.id %}">{{ ticket.title }}</a> - Last updated on {{
+                        ticket.updated_at|date:"Y-m-d H:i" }}
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item">No recent updates.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-light">
+                    <h2 class="text-light">Your Ticket Status Distribution</h2>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('statusChart').getContext('2d');
+
+    // 各ステータスのチケット数（完了を除く）
+    const statusCounts = {
+        10: 5,  // 未処理
+        20: 8,  // 保留
+        30: 12, // 確認中
+        40: 15  // 処理中
+    };
+
+    // 合計チケット数（完了を除く）
+    const totalTicketsWithoutCompleted = Object.values(statusCounts).reduce((a, b) => a + b, 0);
+
+    // 各ステータスの割合を計算（完了を除く）
+    const percentages = {
+        10: (statusCounts[10] / totalTicketsWithoutCompleted * 100).toFixed(2),
+        20: (statusCounts[20] / totalTicketsWithoutCompleted * 100).toFixed(2),
+        30: (statusCounts[30] / totalTicketsWithoutCompleted * 100).toFixed(2),
+        40: (statusCounts[40] / totalTicketsWithoutCompleted * 100).toFixed(2)
+    };
+
+    // データを配列にして設定（完了を除く）
+    const data = {
+        labels: [''],
+        datasets: [{
+            label: '未処理',
+            data: [percentages[10]],
+            backgroundColor: 'rgba(255, 99, 132, 0.6)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1
+        },
+        {
+            label: '保留',
+            data: [percentages[20]],
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        },
+        {
+            label: '確認中',
+            data: [percentages[30]],
+            backgroundColor: 'rgba(255, 206, 86, 0.6)',
+            borderColor: 'rgba(255, 206, 86, 1)',
+            borderWidth: 1
+        },
+        {
+            label: '処理中',
+            data: [percentages[40]],
+            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    const config = {
+        type: 'bar',
+        data: data,
+        options: {
+            indexAxis: 'y',  // 横棒グラフに設定
+            scales: {
+                x: {
+                    stacked: true,  // 積み上げ設定
+                    beginAtZero: true,
+                    max: 100,  // 100%に設定
+                    ticks: {
+                        callback: function (value) {
+                            return value + '%';
+                        }
+                    }
+                },
+                y: {
+                    stacked: true  // 積み上げ設定
+                }
+            },
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
                             }
+                            label += context.raw + '%';
+                            return label;
                         }
                     }
                 }
             }
-        };
-        new Chart(ctx, config);
-    </script>
+        }
+    };
+
+    new Chart(ctx, config);
+
+</script>
 {% endblock %}

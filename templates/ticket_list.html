@@ -8,7 +8,7 @@
     <h2 class="my-4">Tickets for Project: {{ project.name }}</h2>
     <div class="d-flex mb-3">
         <a href="{% url 'ticket_create' project.id %}" class="btn btn-success me-2">Create New Ticket</a>
-        <a href="{% url 'category_list' project.id %}" class="btn btn-primary">Show Category List</a>
+        <a href="{% url 'category_list' project.id %}" class="btn btn-primary me-2">Show Category List</a>
         <a href="{% url 'project_chart' project.id %}" class="btn btn-primary">Show Chart</a>
     </div>
 
