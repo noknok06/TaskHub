@@ -1,20 +1,32 @@
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, redirect
-from .forms import ProjectForm
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView, DetailView
 from django.views.decorators.http import require_POST
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category
+from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category, CustomUser
 from django.contrib.auth.decorators import login_required
 from .forms import JoinProjectForm, TicketForm, CommentForm, CategoryForm, TicketSearchForm
+from .forms import ProjectForm, UserRegistrationForm
 from django.db.models import Count
 import datetime, json
 from django.utils.dateparse import parse_date
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+class UserCreateView(CreateView):
+    model = CustomUser
+    form_class = UserRegistrationForm
+    template_name = 'register_user.html'
+    success_url = reverse_lazy('login')  # ユーザー一覧ページにリダイレクトする場合
+
+    def form_valid(self, form):
+        # ユーザーを保存
+        user = form.save(commit=False)
+        user.set_password(form.cleaned_data['password'])
+        user.save()
+        return super().form_valid(form)
 
 @login_required
 def home(request):

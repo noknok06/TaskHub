@@ -3,10 +3,11 @@
 from django.urls import path
 from . import views
 from .views import ProjectCreateView, JoinProjectView, TicketListView, TicketCreateView, TicketDetailView, ProjectListView, TicketUpdateView
-from .views import CategoryListView, CategoryCreateView, CategoryUpdateView, CategoryDeleteView, ProjectChartView
+from .views import CategoryListView, CategoryCreateView, CategoryUpdateView, CategoryDeleteView, ProjectChartView, UserCreateView
 
 urlpatterns = [
     path('', views.home, name='home'),  # ホームページのURL (例として)
+    path('register/', UserCreateView.as_view(), name='register_user'),
     path('create_project/', ProjectCreateView.as_view(), name='create_project'),
     path('join_project/', JoinProjectView.as_view(), name='join_project'), 
     path('ticket/<int:pk>/', TicketDetailView.as_view(), name='ticket_detail'),  # チケット詳細ページのURL

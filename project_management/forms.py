@@ -3,6 +3,14 @@
 from django import forms
 from .models import Project, UserProject, Ticket, TicketComment, CustomUser, Attachment, Category
 
+
+class UserRegistrationForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput)
+
+    class Meta:
+        model = CustomUser
+        fields = ['email', 'name', 'password']
+        
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project

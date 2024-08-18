@@ -84,7 +84,7 @@
                 <div class="list-group-item">
                     <div class="row mb-2">
                         <div class="col-md-3"><strong>Comment:</strong></div>
-                        <div class="col-md-9">{{ comment.comment }}</div>
+                        <div class="col-md-9">{{ comment.comment | linebreaksbr  }}</div>
                     </div>
                     {% if comment.attachment_file %}
                     <div class="row mb-2">
