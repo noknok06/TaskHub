@@ -1,19 +1,19 @@
-from django.shortcuts import get_object_or_404
-from django.shortcuts import render, redirect
+from .forms import JoinProjectForm, TicketForm, CommentForm, CategoryForm, TicketSearchForm
+from .forms import ProjectForm, UserRegistrationForm
+from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category, CustomUser
+from django.shortcuts import get_object_or_404, render, redirect
+from django.db.models import Count
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView, DetailView
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category, CustomUser
 from django.contrib.auth.decorators import login_required
-from .forms import JoinProjectForm, TicketForm, CommentForm, CategoryForm, TicketSearchForm
-from .forms import ProjectForm, UserRegistrationForm
-from django.db.models import Count
-import datetime, json
 from django.utils.dateparse import parse_date
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
+import datetime, json
 
 class UserCreateView(CreateView):
     model = CustomUser
@@ -146,8 +146,16 @@ class JoinProjectView(CreateView):
     success_url = reverse_lazy('home')  # 成功後にリダイレクトするURL
 
     def form_valid(self, form):
+        user = self.request.user
+        project = form.cleaned_data.get('project')
+        
+        # ユーザーが既にそのプロジェクトに参加しているかチェック
+        if UserProject.objects.filter(user=user, project=project).exists():
+            messages.error(self.request, 'You are already a member of this project.')
+            return redirect(self.request.path)  # 現在のページにリダイレクト
+
         # 現在ログインしているユーザーを取得
-        form.instance.user = self.request.user
+        form.instance.user = user
         return super().form_valid(form)
 
 class TicketListView(ListView):

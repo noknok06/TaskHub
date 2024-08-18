@@ -8,6 +8,13 @@
         <div class="card-header bg-dark text-light">
             <h3 class="mb-0">Join Project Form</h3>
         </div>
+        {% if messages %}
+            <div class="alert alert-danger">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
         <div class="card-body">
             <form method="post" class="mb-3">
                 {% csrf_token %}
@@ -15,6 +22,7 @@
                 <button type="submit" class="btn btn-primary mt-3">Join Project</button>
             </form>
         </div>
+
     </div>
 </div>
 {% endblock %}
