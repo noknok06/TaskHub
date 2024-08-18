@@ -136,4 +136,9 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# 開発中に参照する静的ファイルの追加ディレクトリ
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
