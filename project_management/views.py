@@ -295,7 +295,6 @@ class TicketUpdateView(UpdateView):
     def get_success_url(self):
         # 編集後のリダイレクト先をチケット詳細ページに設定
         return reverse_lazy('ticket_detail', kwargs={'pk': self.object.pk})
-
 class ProjectChartView(DetailView):
     model = Project
     template_name = 'project_chart.html'
@@ -305,18 +304,34 @@ class ProjectChartView(DetailView):
         context = super().get_context_data(**kwargs)
         project = self.object
 
-        # プロジェクトに関連するチケットを取得
-        tickets = Ticket.objects.filter(project=project).order_by('start_date')
-        
+        # プロジェクトに関連するチケットを取得し、日付が設定されていないレコードを除外
+        tickets = Ticket.objects.filter(
+            project=project,
+            start_date__isnull=False,
+            end_date__isnull=False
+        ).order_by('start_date')
+
         # ガントチャート用のデータを JSON 形式に変換
-        chart_data = [
-            {
-                'title': ticket.title,
-                'start': ticket.start_date.isoformat(),
-                'end': ticket.end_date.isoformat()
-            }
-            for ticket in tickets
-        ]
+        chart_data = []
+        for ticket in tickets:
+            # start_date と end_date の形式が有効か確認
+            try:
+                start_date = ticket.start_date.isoformat()
+                end_date = ticket.end_date.isoformat()
+                
+                # 空文字や無効な日付を除外
+                if start_date and end_date:
+                    chart_data.append({
+                        'title': ticket.title,
+                        'start': start_date,
+                        'end': end_date,
+                        'status_id': ticket.status_id,
+                        'ticket_id': ticket.pk
+                    })
+            except ValueError:
+                # 日付形式が無効な場合はスキップ
+                continue
+        
         context['chart_data'] = json.dumps(chart_data)  # JSON 形式でデータを渡す
         return context
 @csrf_exempt
@@ -360,3 +375,4 @@ def update_task_progress(request):
         return JsonResponse({'status': 'success'})
     except Ticket.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Ticket not found'})
+    
