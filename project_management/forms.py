@@ -29,7 +29,7 @@ class CommentForm(forms.ModelForm):
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ['title', 'detail', 'status_id', 'assignee', 'category', 'start_date', 'end_date', 'deadline']
+        fields = ['title', 'detail', 'status_id', 'assignee', 'category', 'start_date', 'end_date', 'deadline', 'parent']
 
     def __init__(self, *args, **kwargs):
         project = kwargs.pop('project', None)
@@ -41,6 +41,9 @@ class TicketForm(forms.ModelForm):
             self.fields['end_date'].initial = self.instance.end_date
             self.fields['deadline'].initial = self.instance.deadline
 
+        # 親チケットを選択するためのフィールドを追加
+        self.fields['parent'].queryset = Ticket.objects.filter(project=project).exclude(id=self.instance.id)
+        
 class TicketAttachmentForm(forms.ModelForm):
     class Meta:
         model = Attachment
