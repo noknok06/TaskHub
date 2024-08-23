@@ -75,6 +75,16 @@
                     </select>
                 </div>
                 
+                <!-- Company Selection -->
+                <div class="mb-3">
+                    <label for="{{ form.companies.id_for_label }}" class="form-label">Company</label>
+                    <select id="{{ form.companies.id_for_label }}" name="{{ form.companies.html_name }}" class="form-select" multiple>
+                        {% for company in form.companies.field.queryset %}
+                            <option value="{{ company.id }}" {% if company.id in form.companies.value %}selected{% endif %}>{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
                 <!-- Attachments Field -->
                 <div class="mb-4">
                     <label class="form-label">Attachments</label>

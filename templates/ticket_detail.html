@@ -15,6 +15,21 @@
                         <div class="col-md-3"><strong>Title:</strong></div>
                         <div class="col-md-9">{{ ticket.title }}</div>
                     </div>
+                    <!-- Selected Companies -->
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Companies:</strong></div>
+                        <div class="col-md-9">
+                            {% if ticket.companies.all %}
+                                <div>
+                                    {% for company in ticket.companies.all %}
+                                        <span class="badge bg-primary me-2">{{ company.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="badge bg-secondary"></span>
+                            {% endif %}
+                        </div>
+                    </div>
                     <div class="row mb-2">
                         <div class="col-md-3"><strong>Description:</strong></div>
                         <div class="col-md-9">{{ ticket.detail | linebreaksbr }}</div>
@@ -68,6 +83,15 @@
                             <a href="{% url 'edit_ticket' pk=ticket.id %}" class="btn btn-primary">Edit Ticket</a>
                         </div>
                     </div>
+                </div>
+            </div>
+            <!-- Remove Ticket Button -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <form method="post" action="{% url 'delete_ticket' pk=ticket.id %}" onsubmit="return confirm('Are you sure you want to delete this ticket?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete Ticket</button>
+                    </form>
                 </div>
             </div>
 
@@ -136,7 +160,7 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {{ form.as_p }}
-                <button type="submit" name="comment_form" class="btn btn-primary">Add Comment</button>
+                <button type="submit" name="comment_form" class="btn btn-primary mt-2">Add Comment</button>
             </form>
         </div>
     </div>

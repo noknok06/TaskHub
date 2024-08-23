@@ -88,12 +88,21 @@
                     </select>
                 </div>
                 
+                <!-- Company Selection -->
+                <div class="mb-3">
+                    <label for="{{ form.companies.id_for_label }}" class="form-label">Company</label>
+                    <select id="{{ form.companies.id_for_label }}" name="{{ form.companies.html_name }}" class="form-select" multiple>
+                        {% for company in form.companies.field.queryset %}
+                            <option value="{{ company.id }}" {% if company.id in form.companies.value %}selected{% endif %}>{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 <!-- Attachments Field -->
                 <div class="mb-4">
                     <label class="form-label">Attachments</label>
                     <input type="file" name="attachment_file" multiple class="form-control">
                     {% if form.instance.pk %}
-                    <a href="{{ form.instance.attachment_file.url }}" class="d-block mt-2">{{ form.instance.attachment_file.name }}</a>
+                    <a href="{{ form.instance.attachment.attachment_file.url }}" class="d-block mt-2">{{ form.instance.attachment.attachment_file.name }}</a>
                 {% endif %}
                 {{ form.DELETE }}
                 </div>

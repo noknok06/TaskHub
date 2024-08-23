@@ -42,8 +42,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 class Project(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    start_date = models.DateField()
-    end_date = models.DateField()
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return self.name  # プロジェクト名を返す
@@ -74,8 +74,8 @@ class Ticket(models.Model):
     updated_at = models.DateTimeField(auto_now=True)  # 更新日時
     deadline = models.DateField(blank=True, null=True)
 
-    # 親チケットへの参照
     parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='sub_tickets')
+    companies = models.ManyToManyField('Company', blank=True, null=True)  # ManyToManyFieldとしてCompanyを設定
 
 
     def __str__(self):
@@ -109,3 +109,8 @@ class Category(models.Model):
     def __str__(self):
         return self.name
         
+class Company(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name

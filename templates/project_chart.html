@@ -2,7 +2,19 @@
 
 {% block content %}
 <div class="container">
-    <h2>    <a href="{% url 'ticket_list' pk=project.id %}" class="btn btn-primary"><i class="fa-regular fa-circle-left"></i></a> {{ project.name }} - Gantt Chart</h2>
+    <h2>
+        <a href="{% url 'ticket_list' pk=project.id %}" class="btn btn-primary">
+            <i class="fa-regular fa-circle-left"></i>
+        </a>
+        {{ project.name }} - Gantt Chart
+    </h2>
+
+    <!-- ビュー切り替えボタン -->
+    <div class="view-buttons mb-2">
+        <button id="view-day" class="btn btn-secondary">Day</button>
+        <button id="view-week" class="btn btn-secondary">Week</button>
+        <button id="view-month" class="btn btn-secondary">Month</button>
+    </div>
 
     <!-- ガントチャート用のSVG -->
     <div class="gantt-wrap">
@@ -16,17 +28,15 @@
         window.onload = function() {
             try {
                 const chartData = JSON.parse('{{ chart_data|escapejs }}');
-    
-                // ステータスIDに基づいて色を設定するためのマッピング
+                
                 const statusColors = {
-                    10: 'rgba(255, 99, 132, 0.6)',  // 未処理: 赤
-                    20: 'rgba(54, 162, 235, 0.6)',  // 保留: 黄色
-                    30: 'rgba(255, 206, 86, 0.6)',  // 確認中: 緑
-                    40: 'rgba(75, 192, 192, 0.6)',  // 処理中: 明るい緑
-                    50: 'rgba(55, 55, 50, 0.6)'   // 完了: 青
+                    10: 'rgba(255, 99, 132, 0.6)',
+                    20: 'rgba(54, 162, 235, 0.6)',
+                    30: 'rgba(255, 206, 86, 0.6)',
+                    40: 'rgba(75, 192, 192, 0.6)',
+                    50: 'rgba(55, 55, 50, 0.6)'
                 };
-    
-                // Frappe Gantt用のタスクデータに変換
+
                 const tasks = chartData.map(ticket => ({
                     id: ticket.title,
                     name: ticket.title,
@@ -34,10 +44,10 @@
                     end: ticket.end,
                     progress: 0,
                     ticket_id: ticket.ticket_id,
-                    custom_class: `status-${ticket.status_id}`  // カスタムクラスを設定
+                    custom_class: `status-${ticket.status_id}`
                 }));
-    
-                const gantt = new Gantt("#gantt", tasks, {
+
+                let gantt = new Gantt("#gantt", tasks, {
                     view_mode: 'Day',
                     date_format: 'YYYY-MM-DD',
                     custom_popup_html: function(task) {
@@ -50,8 +60,7 @@
                         `;
                     },
                     on_click: function(task) {
-                        // クリックされたタスクの詳細画面に遷移
-                        const detailUrl = `/ticket/${task.ticket_id}/`;  // 適切なURLに変更してください
+                        const detailUrl = `/ticket/${task.ticket_id}/`;
                         window.location.href = detailUrl;
                     },
                     on_date_change: function(task, start, end) {
@@ -61,7 +70,18 @@
                         updateTaskProgressInDatabase(task.id, progress);
                     }
                 });
-    
+
+                // ビュー切り替えボタンのイベントリスナーを追加
+                document.getElementById('view-day').addEventListener('click', function() {
+                    gantt.change_view_mode('Day');
+                });
+                document.getElementById('view-week').addEventListener('click', function() {
+                    gantt.change_view_mode('Week');
+                });
+                document.getElementById('view-month').addEventListener('click', function() {
+                    gantt.change_view_mode('Month');
+                });
+
                 // CSSを動的に追加して、カスタムクラスに色を適用
                 const style = document.createElement('style');
                 document.head.appendChild(style);
@@ -73,9 +93,8 @@
                         }
                     `, sheet.cssRules.length);
                 });
-    
+
                 function updateTaskInDatabase(taskId, startDate, endDate) {
-                    // Date オブジェクトを ISO 形式の文字列に変換
                     const startDateString = new Date(startDate).toISOString().split('T')[0];
                     const endDateString = new Date(endDate).toISOString().split('T')[0];
                     
@@ -97,7 +116,7 @@
                         alert('An error occurred while updating the task.');
                     });
                 }
-    
+
                 function updateTaskProgressInDatabase(taskId, progress) {
                     fetch('/update-task-progress/', {
                         method: 'POST',
@@ -115,14 +134,13 @@
                         console.error('Error:', error);
                     });
                 }
-    
-                // CSRFトークンをテンプレートから直接渡す
+
                 const csrfToken = '{{ csrf_token }}';
             } catch (error) {
                 console.error("Error parsing chart data:", error);
             }
         };
     </script>
-    
 </div>
+
 {% endblock %}

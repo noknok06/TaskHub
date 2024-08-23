@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>ALL Project Chart</h2>
+
+    <!-- ビュー切り替えボタン -->
+    <div class="view-buttons mb-2">
+        <button id="view-day" class="btn btn-secondary">Day</button>
+        <button id="view-week" class="btn btn-secondary">Week</button>
+        <button id="view-month" class="btn btn-secondary">Month</button>
+    </div>
+
+    <!-- 各プロジェクト用のガントチャートを表示するセクション -->
+    <div id="gantt-charts"></div>
+
+    <!-- Frappe GanttのCSSとスクリプト -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.min.js"></script>
+    <script>
+        window.onload = function() {
+            try {
+                const chartData = JSON.parse('{{ chart_data|escapejs }}');
+
+                const statusColors = {
+                    10: 'rgba(255, 99, 132, 0.6)',
+                    20: 'rgba(54, 162, 235, 0.6)',
+                    30: 'rgba(255, 206, 86, 0.6)',
+                    40: 'rgba(75, 192, 192, 0.6)',
+                    50: 'rgba(153, 102, 255, 0.6)'
+                };
+
+                const projects = {};
+                chartData.forEach(ticket => {
+                    if (!projects[ticket.project_id]) {
+                        projects[ticket.project_id] = [];
+                    }
+                    projects[ticket.project_id].push({
+                        id: ticket.title,
+                        ticket_id: ticket.ticket_id,
+                        name: ticket.title,
+                        start: ticket.start,
+                        project_id: ticket.project_id,
+                        project_name: ticket.project_name,
+                        end: ticket.end,
+                        progress: 0,
+                        custom_class: `status-${ticket.status_id}`
+                    });
+                });
+
+                const ganttChartsContainer = document.getElementById('gantt-charts');
+                const ganttCharts = {};
+
+                Object.keys(projects).forEach(projectId => {
+                    const projectTasks = projects[projectId];
+                    const projectSection = document.createElement('div');
+                    projectSection.classList.add('gantt-section');
+                    projectSection.innerHTML = `
+                        <h3>■${projectTasks[0].project_name}</h3><div class="gantt-wrap" id="gantt-${projectId}"></div>
+                    `;
+                    ganttChartsContainer.appendChild(projectSection);
+
+                    ganttCharts[projectId] = new Gantt(`#gantt-${projectId}`, projectTasks, {
+                        view_mode: 'Day',
+                        date_format: 'YYYY-MM-DD',
+                        custom_popup_html: function(task) {
+                            return `
+                                <div class="popover-header">${task.name}</div>
+                                <div class="popover-body">
+                                    <p>Start: ${task.start}</p>
+                                    <p>End: ${task.end}</p>
+                                </div>
+                            `;
+                        },
+                        on_click: function(task) {
+                            const detailUrl = `/ticket/${task.ticket_id}/`;
+                            window.location.href = detailUrl;
+                        },
+                        on_date_change: function(task, start, end) {
+                            updateTaskInDatabase(task.id, start, end);
+                        },
+                        on_progress_change: function(task, progress) {
+                            updateTaskProgressInDatabase(task.id, progress);
+                        }
+                    });
+                });
+
+                function updateTaskInDatabase(taskId, startDate, endDate) {
+                    const startDateString = new Date(startDate).toISOString().split('T')[0];
+                    const endDateString = new Date(endDate).toISOString().split('T')[0];
+                    
+                    fetch('/update-task/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({
+                            id: taskId,
+                            start_date: startDateString,
+                            end_date: endDateString
+                        })
+                    })
+                    .then(response => response.json())
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while updating the task.');
+                    });
+                }
+
+                function updateTaskProgressInDatabase(taskId, progress) {
+                    fetch('/update-task-progress/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({
+                            id: taskId,
+                            progress: progress
+                        })
+                    })
+                    .then(response => response.json())
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+
+                // ビュー切り替えボタンのイベントリスナーを追加
+                document.getElementById('view-day').addEventListener('click', function() {
+                    updateViewMode('Day');
+                });
+                document.getElementById('view-week').addEventListener('click', function() {
+                    updateViewMode('Week');
+                });
+                document.getElementById('view-month').addEventListener('click', function() {
+                    updateViewMode('Month');
+                });
+
+                function updateViewMode(viewMode) {
+                    Object.keys(ganttCharts).forEach(projectId => {
+                        ganttCharts[projectId].change_view_mode(viewMode);
+                    });
+                }
+
+                const csrfToken = '{{ csrf_token }}';
+
+                // CSSを動的に追加して、カスタムクラスに色を適用
+                const style = document.createElement('style');
+                document.head.appendChild(style);
+                const sheet = style.sheet;
+                Object.keys(statusColors).forEach(status_id => {
+                    sheet.insertRule(`
+                        .gantt .status-${status_id} .bar {
+                            fill: ${statusColors[status_id]};
+                        }
+                    `, sheet.cssRules.length);
+                });
+
+            } catch (error) {
+                console.error("Error parsing chart data:", error);
+            }
+        };
+    </script>
+
+    <style>
+        .gantt-section {
+            margin-bottom: 40px;
+        }
+        .gantt-wrap {
+            position: relative;
+            height: 100%;
+        }
+        .view-buttons {
+            margin-bottom: 20px;
+        }
+        .view-buttons .btn {
+            margin-right: 10px;
+        }
+    </style>
+</div>
+{% endblock %}

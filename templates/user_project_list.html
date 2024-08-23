@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}My Projects{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="my-4">My Projects</h2>
+    <div class="mb-4">
+        <a href="{% url 'join_project' %}" class="btn btn-primary">Join a New Project</a>
+    </div>
+    <div class="card">
+        <div class="card-header bg-dark text-light">
+            <h3 class="mb-0">Project List</h3>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <tbody>
+                    {% for user_project in user_projects %}
+                    <tr>
+                        <td>{{ user_project.project.name }}</td>
+                        <td>
+                            <a href="{% url 'leave_project' project_id=user_project.project.id %}" class="btn btn-danger btn-sm">×</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2">No projects available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
