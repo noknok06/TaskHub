@@ -6,7 +6,7 @@
 <div class="container">
     <div class="row">
         <div class="col-md-8">
-            <h2 class="my-4">Ticket Details: {{ ticket.title }}</h2>
+            <h2 class="my-4"><a href="{% url 'ticket_list' pk=ticket.project.id %}" class="btn btn-primary"><i class="fa-regular fa-circle-left"></i></a> Ticket Details: {{ ticket.title }}</h2>
 
             <!-- Ticket Details -->
             <div class="card mb-4">
@@ -14,6 +14,21 @@
                     <div class="row mb-2">
                         <div class="col-md-3"><strong>Title:</strong></div>
                         <div class="col-md-9">{{ ticket.title }}</div>
+                    </div>
+                    <!-- Selected Companies -->
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Companies:</strong></div>
+                        <div class="col-md-9">
+                            {% if ticket.companies.all %}
+                                <div>
+                                    {% for company in ticket.companies.all %}
+                                        <span class="badge bg-primary me-2">{{ company.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="badge bg-secondary"></span>
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="row mb-2">
                         <div class="col-md-3"><strong>Description:</strong></div>
@@ -55,11 +70,28 @@
                         <div class="col-md-3"><strong>Project:</strong></div>
                         <div class="col-md-9">{{ ticket.project.name }}</div>
                     </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Parent Project:</strong></div>
+                        <div class="col-md-9">
+                            {% if ticket.parent.id %}
+                            <a href="{% url 'ticket_detail' pk=ticket.parent.id %}">{{ ticket.parent }}</a>
+                            {% endif %}
+                        </div>
+                    </div>
                     <div class="row mt-4">
                         <div class="col-md-12">
                             <a href="{% url 'edit_ticket' pk=ticket.id %}" class="btn btn-primary">Edit Ticket</a>
                         </div>
                     </div>
+                </div>
+            </div>
+            <!-- Remove Ticket Button -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <form method="post" action="{% url 'delete_ticket' pk=ticket.id %}" onsubmit="return confirm('Are you sure you want to delete this ticket?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete Ticket</button>
+                    </form>
                 </div>
             </div>
 
@@ -89,7 +121,11 @@
                     {% if comment.attachment_file %}
                     <div class="row mb-2">
                         <div class="col-md-3"><strong>Attachment:</strong></div>
-                        <div class="col-md-9"><a href="{{ comment.attachment_file.url }}" target="_blank">{{ comment.attachment_file.name }}</a></div>
+                        <div class="col-md-9">
+                            <a href="{{ comment.attachment_file.url }}" data-lightbox="comment-attachments" data-title="{{ comment.attachment_file.name }}">
+                                <img src="{{ comment.attachment_file.url }}" alt="" class="img-thumbnail" style="max-width: 200px; cursor: pointer;">
+                            </a>
+                        </div>
                     </div>
                     {% endif %}
                     <div class="row mb-2">
@@ -128,7 +164,7 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {{ form.as_p }}
-                <button type="submit" name="comment_form" class="btn btn-primary">Add Comment</button>
+                <button type="submit" name="comment_form" class="btn btn-primary mt-2">Add Comment</button>
             </form>
         </div>
     </div>

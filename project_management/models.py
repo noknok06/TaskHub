@@ -42,8 +42,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 class Project(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    start_date = models.DateField()
-    end_date = models.DateField()
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return self.name  # プロジェクト名を返す
@@ -64,15 +64,19 @@ class Ticket(models.Model):
         (50, '完了'),
     ]
     title = models.CharField(max_length=255)
-    detail = models.TextField()
+    detail = models.TextField(blank=True, null=True)
     status_id = models.IntegerField(choices=STATUS_CHOICES, default=10)
     assignee = models.ForeignKey(CustomUser, on_delete=models.CASCADE)  # 修正: CustomUser への外部キー
-    category = models.ForeignKey('Category', on_delete=models.CASCADE)
-    start_date = models.DateField()
-    end_date = models.DateField()
+    category = models.ForeignKey('Category', on_delete=models.CASCADE, blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)  # Add this line
     updated_at = models.DateTimeField(auto_now=True)  # 更新日時
-    deadline = models.DateField()
+    deadline = models.DateField(blank=True, null=True)
+
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='sub_tickets')
+    companies = models.ManyToManyField('Company', blank=True, null=True)  # ManyToManyFieldとしてCompanyを設定
+
 
     def __str__(self):
         return self.title
@@ -105,3 +109,8 @@ class Category(models.Model):
     def __str__(self):
         return self.name
         
+class Company(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name

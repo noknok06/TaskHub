@@ -78,20 +78,33 @@
                            value="{{ form.deadline.value|date:'Y-m-d' }}">
                 </div>
 
+                <div class="mb-3">
+                    <label for="{{ form.parent.id_for_label }}" class="form-label">Parent Ticket</label>
+                    <select id="{{ form.parent.id_for_label }}" name="{{ form.parent.html_name }}" class="form-select">
+                        <option value="" {% if not form.parent.value %}selected{% endif %}>None</option>
+                        {% for ticket in form.parent.field.queryset %}
+                            <option value="{{ ticket.id }}" {% if ticket.id == form.parent.value %}selected{% endif %}>{{ ticket.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Company Selection -->
+                <div class="mb-3">
+                    <label for="{{ form.companies.id_for_label }}" class="form-label">Company</label>
+                    <select id="{{ form.companies.id_for_label }}" name="{{ form.companies.html_name }}" class="form-select" multiple>
+                        {% for company in form.companies.field.queryset %}
+                            <option value="{{ company.id }}" {% if company.id in form.companies.value %}selected{% endif %}>{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 <!-- Attachments Field -->
-                <h3 class="my-4">Attachments</h3>
-                {{ attachments.management_form }}
-                <div id="attachment-forms">
-                    {% for form in attachments %}
-                        <div class="mb-3">
-                            <label for="{{ form.attachment_file.id_for_label }}" class="form-label">Attachment {{ forloop.counter }}</label>
-                            <input type="file" id="{{ form.attachment_file.id_for_label }}" name="{{ form.attachment_file.html_name }}" class="form-control">
-                            {% if form.instance.pk %}
-                                <a href="{{ form.instance.attachment_file.url }}" class="d-block mt-2">{{ form.instance.attachment_file.name }}</a>
-                            {% endif %}
-                            {{ form.DELETE }}
-                        </div>
-                    {% endfor %}
+                <div class="mb-4">
+                    <label class="form-label">Attachments</label>
+                    <input type="file" name="attachment_file" multiple class="form-control">
+                    {% if form.instance.pk %}
+                    <a href="{{ form.instance.attachment.attachment_file.url }}" class="d-block mt-2">{{ form.instance.attachment.attachment_file.name }}</a>
+                {% endif %}
+                {{ form.DELETE }}
                 </div>
 
                 <button type="submit" class="btn btn-primary">Save Changes</button>

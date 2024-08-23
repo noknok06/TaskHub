@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container">
-    <h2 class="my-4">Categories for Project: {{ project.name }}</h2>
+    <h2 class="my-4"><a href="{% url 'ticket_list' pk=project.id %}" class="btn btn-primary"><i class="fa-regular fa-circle-left"></i></a> Categories for Project: {{ project.name }}</h2>
     <a href="{% url 'category_create' project.id %}" class="btn btn-success mb-3">Create New Category</a>
     <div class="card">
         <div class="card-header bg-dark text-light">

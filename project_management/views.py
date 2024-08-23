@@ -1,11 +1,11 @@
 from .forms import JoinProjectForm, TicketForm, CommentForm, CategoryForm, TicketSearchForm
 from .forms import ProjectForm, UserRegistrationForm
-from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category, CustomUser
+from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category, CustomUser, Company
 from django.shortcuts import get_object_or_404, render, redirect
 from django.db.models import Count
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, TemplateView
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -13,6 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.dateparse import parse_date
 from django.http import JsonResponse
 from django.contrib import messages
+from django.utils.decorators import method_decorator
 import datetime, json
 
 class UserCreateView(CreateView):
@@ -121,6 +122,66 @@ class CategoryDeleteView(DeleteView):
         # Ensure that the queryset is filtered by project_id
         return Category.objects.filter(project_id=self.kwargs['project_id'])
 
+
+@method_decorator(login_required, name='dispatch')
+class UserProjectListView(ListView):
+    model = UserProject
+    template_name = 'user_project_list.html'
+    context_object_name = 'user_projects'
+
+    def get_queryset(self):
+        return UserProject.objects.filter(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user'] = self.request.user
+        return context
+
+@method_decorator(login_required, name='dispatch')
+class JoinProjectView(CreateView):
+    model = UserProject
+    form_class = JoinProjectForm
+    template_name = 'join_project.html'
+
+    def form_valid(self, form):
+        user = self.request.user
+        project = form.cleaned_data.get('project')
+
+        # Check if the user is already part of the project
+        if UserProject.objects.filter(user=user, project=project).exists():
+            messages.error(self.request, 'You are already a member of this project.')
+            return redirect(self.request.path)
+
+        form.instance.user = user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('user_project_list')
+
+@method_decorator(login_required, name='dispatch')
+class LeaveProjectView(DeleteView):
+    model = UserProject
+    template_name = 'user_project_confirm_delete.html'
+    context_object_name = 'user_project'
+
+    def get(self, request, project_id):
+        user = request.user
+        # 現在のユーザーと指定されたプロジェクトIDに基づいてUserProjectインスタンスを取得
+        user_project = get_object_or_404(UserProject, user=user, project_id=project_id)
+        
+        # UserProjectインスタンスを削除
+        user_project.delete()
+        
+        # `user_project_list`にリダイレクト
+        return redirect('user_project_list')
+    
+    def get_success_url(self):
+        return reverse_lazy('user_project_list')
+
+    def get_queryset(self):
+        # Ensure that the queryset is filtered by the current user and project
+        return UserProject.objects.filter(user=self.request.user, project_id=self.kwargs['project_id'])
+    
 class ProjectCreateView(CreateView):
     model = Project
     template_name = 'create_project.html'
@@ -143,7 +204,7 @@ class JoinProjectView(CreateView):
     model = UserProject
     form_class = JoinProjectForm
     template_name = 'join_project.html'
-    success_url = reverse_lazy('home')  # 成功後にリダイレクトするURL
+    success_url = reverse_lazy('user_project_list')  # 成功後にリダイレクトするURL
 
     def form_valid(self, form):
         user = self.request.user
@@ -264,6 +325,13 @@ class TicketDetailView(DetailView):
         
         return self.render_to_response(self.get_context_data())
 
+class TicketDeleteView(DeleteView):
+    model = Ticket
+    success_url = reverse_lazy('ticket_list')  # 削除後にリダイレクトするURL
+
+    def get_success_url(self):
+        return reverse_lazy('ticket_list', kwargs={'pk': self.object.project.id})  # プロジェクトのチケットリストにリダイレクト
+    
 # class TicketCommentCreateView(CreateView):
 #     model = TicketComment
 #     form_class = TicketCommentForm
@@ -295,7 +363,7 @@ class TicketUpdateView(UpdateView):
     def get_success_url(self):
         # 編集後のリダイレクト先をチケット詳細ページに設定
         return reverse_lazy('ticket_detail', kwargs={'pk': self.object.pk})
-
+    
 class ProjectChartView(DetailView):
     model = Project
     template_name = 'project_chart.html'
@@ -305,20 +373,75 @@ class ProjectChartView(DetailView):
         context = super().get_context_data(**kwargs)
         project = self.object
 
-        # プロジェクトに関連するチケットを取得
-        tickets = Ticket.objects.filter(project=project).order_by('start_date')
-        
+        # プロジェクトに関連するチケットを取得し、日付が設定されていないレコードを除外
+        tickets = Ticket.objects.filter(
+            project=project,
+            start_date__isnull=False,
+            end_date__isnull=False
+        ).order_by('start_date')
+
         # ガントチャート用のデータを JSON 形式に変換
-        chart_data = [
-            {
-                'title': ticket.title,
-                'start': ticket.start_date.isoformat(),
-                'end': ticket.end_date.isoformat()
-            }
-            for ticket in tickets
-        ]
+        chart_data = []
+        for ticket in tickets:
+            # start_date と end_date の形式が有効か確認
+            try:
+                start_date = ticket.start_date.isoformat()
+                end_date = ticket.end_date.isoformat()
+                
+                # 空文字や無効な日付を除外
+                if start_date and end_date:
+                    chart_data.append({
+                        'title': ticket.title,
+                        'start': start_date,
+                        'end': end_date,
+                        'status_id': ticket.status_id,
+                        'ticket_id': ticket.pk
+                    })
+            except ValueError:
+                # 日付形式が無効な場合はスキップ
+                continue
+        
         context['chart_data'] = json.dumps(chart_data)  # JSON 形式でデータを渡す
         return context
+
+class ProjectAllChartView(TemplateView):
+    template_name = 'project_all_chart.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # 全プロジェクトに関連するチケットを取得し、日付が設定されていないレコードを除外
+        tickets = Ticket.objects.filter(
+            start_date__isnull=False,
+            end_date__isnull=False
+        ).order_by('start_date')
+
+        # ガントチャート用のデータを JSON 形式に変換
+        chart_data = []
+        for ticket in tickets:
+            # start_date と end_date の形式が有効か確認
+            try:
+                start_date = ticket.start_date.isoformat()
+                end_date = ticket.end_date.isoformat()
+                
+                # 空文字や無効な日付を除外
+                if start_date and end_date:
+                    chart_data.append({
+                        'title': ticket.title,
+                        'start': start_date,
+                        'end': end_date,
+                        'status_id': ticket.status_id,
+                        'ticket_id': ticket.pk,
+                        'project_id': ticket.project_id,
+                        'project_name': ticket.project.name
+                    })
+            except ValueError:
+                # 日付形式が無効な場合はスキップ
+                continue
+        
+        context['chart_data'] = json.dumps(chart_data)  # JSON 形式でデータを渡す
+        return context
+        
 @csrf_exempt
 @require_POST
 def update_task(request):
@@ -342,6 +465,7 @@ def update_task(request):
         ticket.save()
         return JsonResponse({'status': 'success'})
     except Ticket.DoesNotExist:
+        messages.error('Failed to change date.')
         return JsonResponse({'status': 'error', 'message': 'Ticket not found'})
 
 @csrf_exempt
@@ -359,4 +483,65 @@ def update_task_progress(request):
         ticket.save()
         return JsonResponse({'status': 'success'})
     except Ticket.DoesNotExist:
+        messages.error('Failed to change date.')
         return JsonResponse({'status': 'error', 'message': 'Ticket not found'})
+
+def create_ticket(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    if request.method == 'POST':
+        form = TicketForm(request.POST, request.FILES)
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.project = project
+            ticket.save()
+            form.save_m2m()  # ManyToManyField の保存
+            return redirect('ticket_list', project_id=project.id)
+    else:
+        form = TicketForm()
+
+    return render(request, 'ticket_form.html', {'form': form, 'project': project})
+
+
+class TicketsView(ListView):
+    model = Ticket
+    template_name = 'tickets.html'
+    context_object_name = 'tickets'
+    form_class = TicketSearchForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = self.get_form()
+        context['companies'] = Company.objects.all()
+        return context
+
+    def get_form(self):
+        return self.form_class(self.request.GET or None)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        form = self.get_form()
+
+        if form.is_valid():
+            cleaned_data = form.cleaned_data
+
+            if cleaned_data.get('title'):
+                queryset = queryset.filter(title__icontains=cleaned_data['title'])
+            if cleaned_data.get('status'):
+                queryset = queryset.filter(status_id=cleaned_data['status'])
+            if cleaned_data.get('category'):
+                queryset = queryset.filter(category__name__icontains=cleaned_data['category'])
+            if cleaned_data.get('start_date'):
+                queryset = queryset.filter(start_date__gte=cleaned_data['start_date'])
+            if cleaned_data.get('end_date'):
+                queryset = queryset.filter(end_date__lte=cleaned_data['end_date'])
+            if cleaned_data.get('deadline'):
+                queryset = queryset.filter(deadline__lte=cleaned_data['deadline'])
+                
+            # company_ids フィルタリング
+            company_ids = self.request.GET.get('company_ids')
+            if company_ids:
+                # company_ids がカンマ区切りの文字列として渡されることを想定
+                company_ids_list = company_ids.split(',')
+                queryset = queryset.filter(companies__id__in=company_ids_list).distinct()
+
+        return queryset

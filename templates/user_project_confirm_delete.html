@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirm Leave Project{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="my-4">Confirm Leave Project</h2>
+    <form method="post">
+        {% csrf_token %}
+        <p>Are you sure you want to leave the project "{{ user_project.project.name }}"?</p>
+        <button type="submit" class="btn btn-danger">Leave</button>
+        <a href="{% url 'user_project_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

@@ -2,7 +2,19 @@
 
 {% block content %}
 <div class="container">
-    <h2>{{ project.name }} - Gantt Chart</h2>
+    <h2>
+        <a href="{% url 'ticket_list' pk=project.id %}" class="btn btn-primary">
+            <i class="fa-regular fa-circle-left"></i>
+        </a>
+        {{ project.name }} - Gantt Chart
+    </h2>
+
+    <!-- ビュー切り替えボタン -->
+    <div class="view-buttons mb-2">
+        <button id="view-day" class="btn btn-secondary">Day</button>
+        <button id="view-week" class="btn btn-secondary">Week</button>
+        <button id="view-month" class="btn btn-secondary">Month</button>
+    </div>
 
     <!-- ガントチャート用のSVG -->
     <div class="gantt-wrap">
@@ -12,25 +24,30 @@
     <!-- Frappe GanttのCSSとスクリプト -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.min.js"></script>
-
     <script>
         window.onload = function() {
             try {
-                // JSON データを取得し、パースする
                 const chartData = JSON.parse('{{ chart_data|escapejs }}');
-                console.log(chartData); // データを確認するためのログ
-    
-                // Frappe Gantt用のタスクデータに変換
+                
+                const statusColors = {
+                    10: 'rgba(255, 99, 132, 0.6)',
+                    20: 'rgba(54, 162, 235, 0.6)',
+                    30: 'rgba(255, 206, 86, 0.6)',
+                    40: 'rgba(75, 192, 192, 0.6)',
+                    50: 'rgba(55, 55, 50, 0.6)'
+                };
+
                 const tasks = chartData.map(ticket => ({
                     id: ticket.title,
                     name: ticket.title,
                     start: ticket.start,
                     end: ticket.end,
-                    progress: 0  // 進捗はデフォルトで0に設定
+                    progress: 0,
+                    ticket_id: ticket.ticket_id,
+                    custom_class: `status-${ticket.status_id}`
                 }));
-    
-                // ガントチャートの作成
-                const gantt = new Gantt("#gantt", tasks, {
+
+                let gantt = new Gantt("#gantt", tasks, {
                     view_mode: 'Day',
                     date_format: 'YYYY-MM-DD',
                     custom_popup_html: function(task) {
@@ -42,18 +59,42 @@
                             </div>
                         `;
                     },
+                    on_click: function(task) {
+                        const detailUrl = `/ticket/${task.ticket_id}/`;
+                        window.location.href = detailUrl;
+                    },
                     on_date_change: function(task, start, end) {
-                        console.log(`${task.name}: changed start date to ${start} and end date to ${end}`);
                         updateTaskInDatabase(task.id, start, end);
                     },
                     on_progress_change: function(task, progress) {
-                        console.log(`${task.name}: changed progress to ${progress}%`);
                         updateTaskProgressInDatabase(task.id, progress);
                     }
                 });
-    
+
+                // ビュー切り替えボタンのイベントリスナーを追加
+                document.getElementById('view-day').addEventListener('click', function() {
+                    gantt.change_view_mode('Day');
+                });
+                document.getElementById('view-week').addEventListener('click', function() {
+                    gantt.change_view_mode('Week');
+                });
+                document.getElementById('view-month').addEventListener('click', function() {
+                    gantt.change_view_mode('Month');
+                });
+
+                // CSSを動的に追加して、カスタムクラスに色を適用
+                const style = document.createElement('style');
+                document.head.appendChild(style);
+                const sheet = style.sheet;
+                Object.keys(statusColors).forEach(status_id => {
+                    sheet.insertRule(`
+                        .gantt .status-${status_id} .bar {
+                            fill: ${statusColors[status_id]};
+                        }
+                    `, sheet.cssRules.length);
+                });
+
                 function updateTaskInDatabase(taskId, startDate, endDate) {
-                    // Date オブジェクトを ISO 形式の文字列に変換
                     const startDateString = new Date(startDate).toISOString().split('T')[0];
                     const endDateString = new Date(endDate).toISOString().split('T')[0];
                     
@@ -75,13 +116,13 @@
                         alert('An error occurred while updating the task.');
                     });
                 }
-    
+
                 function updateTaskProgressInDatabase(taskId, progress) {
                     fetch('/update-task-progress/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken  // CSRFトークンをここで使用
+                            'X-CSRFToken': csrfToken
                         },
                         body: JSON.stringify({
                             id: taskId,
@@ -89,21 +130,17 @@
                         })
                     })
                     .then(response => response.json())
-                    .then(data => {
-                        console.log('Task progress updated:', data);
-                    })
                     .catch(error => {
                         console.error('Error:', error);
                     });
                 }
-    
-                // CSRFトークンをテンプレートから直接渡す
+
                 const csrfToken = '{{ csrf_token }}';
             } catch (error) {
                 console.error("Error parsing chart data:", error);
             }
         };
     </script>
-    
 </div>
+
 {% endblock %}

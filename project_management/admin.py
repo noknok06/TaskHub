@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category
+from .models import CustomUser, Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category, Company
 
 # Custom admin for CustomUser
 class CustomUserAdmin(admin.ModelAdmin):
@@ -51,6 +51,10 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'project')
     search_fields = ('name', 'project__name')
 
+class CompanyAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
+
 # Register the admin classes
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Project, ProjectAdmin)
@@ -60,3 +64,4 @@ admin.site.register(TicketComment, TicketCommentAdmin)
 admin.site.register(TicketFavorite, TicketFavoriteAdmin)
 admin.site.register(Attachment, AttachmentAdmin)
 admin.site.register(Category, CategoryAdmin)
+admin.site.register(Company, CompanyAdmin)
