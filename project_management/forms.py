@@ -79,14 +79,14 @@ class TicketSearchForm(forms.Form):
 
     def get_company_ids(self):
         return self.cleaned_data.get('company_ids', '').split(',')
-    
+
 class JoinProjectForm(forms.ModelForm):
+    project_search = forms.CharField(max_length=100, required=False, label='Search Project')
+
     class Meta:
         model = UserProject
         fields = ['project']
 
     def __init__(self, *args, **kwargs):
-        project_id = kwargs.pop('project_id', None)
         super().__init__(*args, **kwargs)
-        if project_id:
-            self.fields['project'].queryset = Project.objects.filter(id=project_id)
+        self.fields['project'].queryset = Project.objects.none()

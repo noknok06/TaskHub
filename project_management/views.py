@@ -4,6 +4,7 @@ from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite,
 from django.shortcuts import get_object_or_404, render, redirect
 from django.db.models import Count
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView, DetailView, TemplateView
 from django.views.decorators.http import require_POST
@@ -145,18 +146,33 @@ class JoinProjectView(CreateView):
 
     def form_valid(self, form):
         user = self.request.user
-        project = form.cleaned_data.get('project')
+        project_id = self.request.POST.get('project')  # 選択されたプロジェクトIDを取得
+        project = Project.objects.get(id=project_id)
 
-        # Check if the user is already part of the project
+        # 既に参加しているかチェック
         if UserProject.objects.filter(user=user, project=project).exists():
             messages.error(self.request, 'You are already a member of this project.')
             return redirect(self.request.path)
 
         form.instance.user = user
+        form.instance.project = project
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy('user_project_list')
+
+
+@method_decorator(login_required, name='dispatch')
+class ProjectSearchView(View):
+    def get(self, request, *args, **kwargs):
+        search_query = request.GET.get('q', '')
+        if search_query:
+            projects = Project.objects.filter(name__icontains=search_query)
+        else:
+            projects = Project.objects.all()
+
+        results = [{'id': project.id, 'name': project.name} for project in projects]
+        return JsonResponse(results, safe=False)
 
 @method_decorator(login_required, name='dispatch')
 class LeaveProjectView(DeleteView):
