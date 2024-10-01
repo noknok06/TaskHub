@@ -8,52 +8,58 @@
         <div class="card-header bg-dark text-light">
             <h3 class="mb-0">Join Project Form</h3>
         </div>
+        {% if messages %}
+        <div class="alert alert-danger">
+            {% for message in messages %}
+            <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
         <div class="card-body">
-            <form method="post" id="join-project-form">
+            <form method="post" id="join-project-form" class="mb-3">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="project-search">Search Project:</label>
                     <input type="text" id="project-search" class="form-control" placeholder="Enter project name">
                 </div>
-                
-                <!-- プロジェクトリストを表示する領域 -->
-                <div id="project-results" class="mt-3"></div>
+                <div id="project-results" class="list-group mt-3">
+                    <!-- 検索結果をここに表示 -->
+                </div>
+                <input type="hidden" name="project_id" id="selected-project-id">
             </form>
         </div>
     </div>
 </div>
 
 <script>
-// プロジェクト検索のイベントリスナーを設定
-document.getElementById('project-search').addEventListener('input', function() {
-    var query = this.value;
-    if (query.length > 0) {  // 文字が3つ以上入力されたら検索を開始
-        fetch('/project/search/?q=' + query)
+    document.getElementById('project-search').addEventListener('input', function () {
+        const query = this.value;
+        fetch(`/search_projects/?q=${query}`)
             .then(response => response.json())
             .then(data => {
-                var resultDiv = document.getElementById('project-results');
-                resultDiv.innerHTML = '';  // リストをクリア
-                data.forEach(function(project) {
-                    var projectDiv = document.createElement('div');
-                    projectDiv.classList.add('project-item');
+                const resultsDiv = document.getElementById('project-results');
+                resultsDiv.innerHTML = '';  // 一旦クリア
+                data.projects.forEach(project => {
+                    const projectDiv = document.createElement('div');
+                    projectDiv.classList.add('list-group-item');
                     projectDiv.innerHTML = `
-                        <div class="card mb-2">
-                            <div class="card-body">
-                                <strong>${project.name}</strong>
-                                <button class="btn btn-sm btn-success float-right select-project-btn" data-project-id="${project.id}">Select</button>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>${project.name}</span>
+                                <button class="btn btn-primary select-project" data-project-id="${project.id}">Select</button>
                             </div>
-                        </div>`;
-                    
-                    // 選択ボタンにイベントリスナーを追加
-                    projectDiv.querySelector('.select-project-btn').addEventListener('click', function() {
-                        document.getElementById('id_project').value = project.id;
-                        alert('Selected project: ' + project.name);
-                    });
+                        `;
+                    resultsDiv.appendChild(projectDiv);
+                });
 
-                    resultDiv.appendChild(projectDiv);
+                // 選択ボタンにイベントを追加
+                document.querySelectorAll('.select-project').forEach(button => {
+                    button.addEventListener('click', function () {
+                        const projectId = this.getAttribute('data-project-id');
+                        document.getElementById('selected-project-id').value = projectId;
+                        // alert('Selected project ID: ' + projectId);
+                    });
                 });
             });
-    }
-});
+    });
 </script>
 {% endblock %}

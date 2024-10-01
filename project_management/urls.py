@@ -26,10 +26,8 @@ urlpatterns = [
     path('projects/chart/', ProjectAllChartView.as_view(), name='project_all_chart'),
     path('update-task/', views.update_task, name='update_task'),
     path('my_projects/', UserProjectListView.as_view(), name='user_project_list'),
-    path('join_project/', JoinProjectView.as_view(), name='join_project'),
     path('leave_project/<int:project_id>/', LeaveProjectView.as_view(), name='leave_project'),
     path('attachment/<int:pk>/delete/<int:ticket_id>/', AttachmentDeleteView.as_view(), name='delete_attachment'),
     path('upload_image/', upload_image, name='upload_image'),
-    path('project/search/', ProjectSearchView.as_view(), name='project_search'),  # 追加
-    
+    path('search_projects/', views.search_projects, name='search_projects'),
 ]

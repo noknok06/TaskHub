@@ -178,26 +178,31 @@ class ProjectSearchView(View):
         results = [{'id': project.id, 'name': project.name} for project in projects]
         return JsonResponse(results, safe=False)
     
-@method_decorator(login_required, name='dispatch')
 class JoinProjectView(CreateView):
     model = UserProject
-    form_class = JoinProjectForm
+    fields = ['project']
     template_name = 'join_project.html'
 
-    def form_valid(self, form):
-        user = self.request.user
-        project = form.cleaned_data.get('project')
+    def post(self, request, *args, **kwargs):
+        project_id = request.POST.get('project_id')
+        project = get_object_or_404(Project, id=project_id)
 
-        # Check if the user is already part of the project
-        if UserProject.objects.filter(user=user, project=project).exists():
-            messages.error(self.request, 'You are already a member of this project.')
-            return redirect(self.request.path)
+        # 既に参加していないか確認
+        if not UserProject.objects.filter(user=request.user, project=project).exists():
+            UserProject.objects.create(user=request.user, project=project)
+            messages.success(request, 'You have successfully joined the project.')
+        else:
+            messages.warning(request, 'You are already a member of this project.')
 
-        form.instance.user = user
-        return super().form_valid(form)
+        return redirect('user_project_list')
 
-    def get_success_url(self):
-        return reverse_lazy('user_project_list')
+def search_projects(request):
+    query = request.GET.get('q', '')
+    if query:
+        projects = Project.objects.filter(name__icontains=query)
+        project_list = [{'id': project.id, 'name': project.name} for project in projects]
+        return JsonResponse({'projects': project_list})
+    return JsonResponse({'projects': []})
 
 @method_decorator(login_required, name='dispatch')
 class LeaveProjectView(DeleteView):
@@ -240,25 +245,6 @@ class ProjectListView(ListView):
 
     def get_queryset(self):
         return Project.objects.all()
-
-class JoinProjectView(CreateView):
-    model = UserProject
-    form_class = JoinProjectForm
-    template_name = 'join_project.html'
-    success_url = reverse_lazy('user_project_list')  # 成功後にリダイレクトするURL
-
-    def form_valid(self, form):
-        user = self.request.user
-        project = form.cleaned_data.get('project')
-        
-        # ユーザーが既にそのプロジェクトに参加しているかチェック
-        if UserProject.objects.filter(user=user, project=project).exists():
-            messages.error(self.request, 'You are already a member of this project.')
-            return redirect(self.request.path)  # 現在のページにリダイレクト
-
-        # 現在ログインしているユーザーを取得
-        form.instance.user = user
-        return super().form_valid(form)
 
 class TicketListView(ListView):
     model = Ticket
