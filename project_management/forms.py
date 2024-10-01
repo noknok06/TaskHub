@@ -49,8 +49,6 @@ class TicketForm(forms.ModelForm):
 
         self.fields['parent'].queryset = Ticket.objects.filter(project=project).exclude(id=self.instance.id)
 
-
-        
 class TicketAttachmentForm(forms.ModelForm):
     class Meta:
         model = Attachment
@@ -71,8 +69,14 @@ class CategoryForm(forms.ModelForm):
             self.fields['project'].initial = project_id
 
 class TicketSearchForm(forms.Form):
+    STATUS_CHOICES = Ticket.STATUS_CHOICES  # STATUS_CHOICESを取得する仮定
     title = forms.CharField(required=False, label='Title')
-    status = forms.ChoiceField(choices=[('', 'Any')] + list(Ticket.STATUS_CHOICES), required=False, label='Status')
+    status = forms.MultipleChoiceField(
+        choices=STATUS_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        initial=[choice[0] for choice in STATUS_CHOICES]  # 全選択を初期値として設定
+    )
     category = forms.CharField(required=False, label='Category')
     start_date = forms.DateField(required=False, widget=forms.TextInput(attrs={'type': 'date'}), label='Start Date')
     end_date = forms.DateField(required=False, widget=forms.TextInput(attrs={'type': 'date'}), label='End Date')
@@ -92,3 +96,8 @@ class JoinProjectForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if project_id:
             self.fields['project'].queryset = Project.objects.filter(id=project_id)
+
+class AttachmentDeleteForm(forms.ModelForm):
+    class Meta:
+        model = Attachment
+        fields = []  # フィールドは必要ありませんが、モデルを指定する必要があります            

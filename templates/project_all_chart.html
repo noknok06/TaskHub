@@ -27,7 +27,7 @@
                     20: 'rgba(54, 162, 235, 0.6)',
                     30: 'rgba(255, 206, 86, 0.6)',
                     40: 'rgba(75, 192, 192, 0.6)',
-                    50: 'rgba(153, 102, 255, 0.6)'
+                    50: 'rgba(55, 55, 50, 0.6)'
                 };
 
                 const projects = {};
@@ -44,7 +44,11 @@
                         project_name: ticket.project_name,
                         end: ticket.end,
                         progress: 0,
-                        custom_class: `status-${ticket.status_id}`
+                        category: ticket.category_name,
+                        dependencies: ticket.parent,
+                        companies: ticket.companies,
+                        custom_class: ticket.category_name === 'マイルストーン' ? 'milestone' : `status-${ticket.status_id}`,
+                        milestone: ticket.category_name === 'マイルストーン' // マイルストーンとして扱う
                     });
                 });
 
@@ -65,10 +69,20 @@
                         date_format: 'YYYY-MM-DD',
                         custom_popup_html: function(task) {
                             return `
+                                <style>
+                                    .popup-wrapper{
+                                        width:30%;
+                                    }
+                                    p{
+                                        margin:0
+                                    }
+                                </style>
                                 <div class="popover-header">${task.name}</div>
                                 <div class="popover-body">
+                                    <p>Category: ${task.category}</p>
                                     <p>Start: ${task.start}</p>
                                     <p>End: ${task.end}</p>
+                                    <p>companies: ${task.companies}</p>
                                 </div>
                             `;
                         },
@@ -145,10 +159,19 @@
 
                 const csrfToken = '{{ csrf_token }}';
 
-                // CSSを動的に追加して、カスタムクラスに色を適用
+
+                // マイルストーンのCSSを追加
                 const style = document.createElement('style');
                 document.head.appendChild(style);
                 const sheet = style.sheet;
+                sheet.insertRule(`
+                    .gantt .milestone .bar {
+                        fill: red;
+                        stroke: black;
+                        stroke-width: 2px;
+                    }
+                `, sheet.cssRules.length);
+
                 Object.keys(statusColors).forEach(status_id => {
                     sheet.insertRule(`
                         .gantt .status-${status_id} .bar {

@@ -2,8 +2,9 @@
 
 from django.urls import path
 from . import views
-from .views import ProjectCreateView, JoinProjectView, TicketListView, TicketCreateView, TicketDetailView, ProjectListView, TicketUpdateView
+from .views import ProjectCreateView, JoinProjectView, TicketListView, TicketCreateView, TicketDetailView, ProjectListView, TicketUpdateView, AttachmentDeleteView
 from .views import CategoryListView, CategoryCreateView, CategoryUpdateView, CategoryDeleteView, ProjectChartView, UserCreateView, ProjectAllChartView, UserProjectListView, LeaveProjectView, TicketsView, TicketDeleteView
+from .views import upload_image
 
 urlpatterns = [
     path('', views.home, name='home'),  # ホームページのURL (例として)
@@ -27,4 +28,7 @@ urlpatterns = [
     path('my_projects/', UserProjectListView.as_view(), name='user_project_list'),
     path('join_project/', JoinProjectView.as_view(), name='join_project'),
     path('leave_project/<int:project_id>/', LeaveProjectView.as_view(), name='leave_project'),
+    path('attachment/<int:pk>/delete/<int:ticket_id>/', AttachmentDeleteView.as_view(), name='delete_attachment'),
+    path('upload_image/', upload_image, name='upload_image'),
+    
 ]

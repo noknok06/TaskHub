@@ -6,51 +6,40 @@
 {% block content %}
 <!-- 検索フォーム -->
 <div class="mb-4">
-  <form method="get" action="{% url 'tickets' %}" class="row g-3">
+  <button type="button" class="btn btn-primary" id="toggle-search-form">Search Form</button>
+  
+  <form style="display:none" method="get" action="{% url 'tickets' %}" class="row g-3 mt-3" id="search-form">
       <div class="col-md-2">
           <label for="id_status" class="form-label">Status</label>
-          {{ form.status|add_class:"form-select" }}
+          <div id="status-checkbox-group">
+              {% for value, label in form.status.field.choices %}
+                  <div class="form-check">
+                      <input type="checkbox" name="status" value="{{ value }}" id="status_{{ value }}" class="form-check-input" {% if value in selected_statuses %}checked{% endif %}>
+                      <label class="form-check-label" for="status_{{ value }}">{{ label }}</label>
+                  </div>
+              {% endfor %}
+          </div>
       </div>
       <div class="col-md-2">
           <label for="id_category" class="form-label">Category</label>
           {{ form.category|add_class:"form-control" }}
       </div>
-      <div class="col-md-2">
+      <div class="col-md-4">
           <label for="id_companies" class="form-label">Companies</label>
-          <input type="hidden" name="company_ids" id="company_ids" value="{{ form.company_ids.value|default_if_none:'' }}">
-          <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#companyModal">Select Companies</button>
-          <span id="selected_companies" class="ms-2"></span>
+          <div id="company-checkbox-group">
+              {% for company in companies %}
+                  <div class="form-check">
+                      <input type="checkbox" name="company_ids" value="{{ company.id }}" id="company_{{ company.id }}" class="form-check-input" {% if company.id|stringformat:"s" in selected_company_ids %}checked{% endif %}>
+                      <label class="form-check-label" for="company_{{ company.id }}">{{ company.name }}</label>
+                  </div>
+              {% endfor %}
+          </div>
       </div>
       <div class="col-md-12">
           <button type="submit" class="btn btn-primary">Search</button>
           <a href="{% url 'tickets' %}" class="btn btn-secondary">Reset</a>
       </div>
   </form>
-</div>
-
-<!-- Modal -->
-<div class="modal fade" id="companyModal" tabindex="-1" aria-labelledby="companyModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="companyModalLabel">Select Companies</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="list-group">
-            {% for company in companies %}
-                <a href="#" class="list-group-item list-group-item-action">
-                    <input type="checkbox" class="company-checkbox" data-id="{{ company.id }}" data-name="{{ company.name }}"> {{ company.name }}
-                </a>
-            {% endfor %}
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="save_companies">Save</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <div class="container">
@@ -60,6 +49,7 @@
     <table class="table table-striped table-bordered">
       <thead class="table-dark">
         <tr>
+          <th>Project</th> <!-- 新しい列を追加 -->
           <th>Title</th>
           <th>Status</th>
           <th>Category</th>
@@ -72,24 +62,13 @@
       <tbody>
         {% for ticket in tickets %}
           <tr>
+            <td><a href="{% url 'ticket_list' ticket.project.id %}">{{ ticket.project.name }}</a></td>
             <td>
               <a href="{% url 'ticket_detail' ticket.id %}">{{ ticket.title }}</a>
             </td>
             <td>
               <span class="badge bg-secondary">
-                {% if ticket.status_id == 10 %}
-                  未処理
-                {% elif ticket.status_id == 20 %}
-                  保留
-                {% elif ticket.status_id == 30 %}
-                  確認中
-                {% elif ticket.status_id == 40 %}
-                  処理中
-                {% elif ticket.status_id == 50 %}
-                  完了
-                {% else %}
-                  不明
-                {% endif %}
+                {{ ticket.get_status_id_display }}
               </span>
             </td>
             <td>{{ ticket.category.name }}</td>
@@ -100,51 +79,43 @@
                 <span class="badge bg-light text-dark"></span>
               {% endfor %}
             </td>
-            <td>{{ ticket.start_date|date:'Y-m-d' }}</td>
-            <td>{{ ticket.end_date|date:'Y-m-d' }}</td>
+            <td {% if ticket.start_date and ticket.start_date <= today and ticket.status_id == 10 %} style="background-color: yellow;" {% endif %}>
+                {{ ticket.start_date|date:"Y-m-d" }}
+            </td>
+            <td {% if ticket.end_date and ticket.end_date <= today and ticket.status_id != 50 %} style="background-color: yellow;" {% endif %}>
+                {{ ticket.end_date|date:"Y-m-d" }}
+            </td>
             <td>{{ ticket.deadline|date:'Y-m-d' }}</td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="7">No tickets available.</td>
+            <td colspan="8">No tickets available.</td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
   <!-- JavaScript -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
     $(document).ready(function() {
-      // モーダルが表示されるたびに選択状態を更新
-      $('#companyModal').on('show.bs.modal', function() {
-          var selectedCompanies = $('#company_ids').val().split(',');
-          $('.company-checkbox').each(function() {
-              $(this).prop('checked', selectedCompanies.includes($(this).data('id').toString()));
+      // ステータスの選択処理
+      $('#status-checkbox-group input').on('change', function() {
+          var selectedStatuses = [];
+          $('#status-checkbox-group input:checked').each(function() {
+              selectedStatuses.push($(this).val());
           });
+          // フォームの状態を更新（例えば、hiddenフィールドに設定するなど）
+          // $('#status_ids').val(selectedStatuses.join(','));
       });
-  
-      // 「Save」ボタンがクリックされたときの処理
-      $('#save_companies').on('click', function() {
-          var selectedCompanies = [];
-          var companyNames = [];
-  
-          $('.company-checkbox:checked').each(function() {
-              selectedCompanies.push($(this).data('id'));
-              companyNames.push($(this).data('name'));
-          });
-  
-          $('#company_ids').val(selectedCompanies.join(','));
-          $('#selected_companies').text(companyNames.join(', '));
-  
-          var modal = bootstrap.Modal.getInstance(document.getElementById('companyModal'));
-          modal.hide(); // モーダルを隠す
-  
-          // モーダルのオーバーレイを強制的に削除
-          $('.modal-backdrop').remove();
+
+      // トグルボタンの処理
+      $('#toggle-search-form').on('click', function() {
+          $('#search-form').toggle();
       });
-  });
-    </script>
+    });
+  </script>
 {% endblock %}

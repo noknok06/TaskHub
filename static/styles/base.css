@@ -85,4 +85,14 @@
     .main-content.full {
         margin-left: 0; /* Sidebarが隠れるとメインコンテンツの余白も調整 */
     }
+    .dropzone {
+        border: 2px dashed #007bff;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+    }
+    .dropzone.dragover {
+        border-color: #0056b3;
+        background-color: #e9ecef;
+    }    
 </style>

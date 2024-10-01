@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load markdown_extras %}
 
 {% block title %}Ticket Detail{% endblock %}
 
@@ -6,8 +7,11 @@
 <div class="container">
     <div class="row">
         <div class="col-md-8">
-            <h2 class="my-4"><a href="{% url 'ticket_list' pk=ticket.project.id %}" class="btn btn-primary"><i class="fa-regular fa-circle-left"></i></a> Ticket Details: {{ ticket.title }}</h2>
-
+            <h2 class="my-4"><a href="{% url 'ticket_list' pk=ticket.project.id %}" class="btn btn-primary"><i class="fa-regular fa-circle-left"></i></a> Ticket Details:
+                <a type="button" onclick="window.history.back();">
+                    {{ ticket.title }}
+                </a> 
+            </h2>
             <!-- Ticket Details -->
             <div class="card mb-4">
                 <div class="card-body">
@@ -37,13 +41,7 @@
                     <div class="row mb-2">
                         <div class="col-md-3"><strong>Status:</strong></div>
                         <div class="col-md-9">
-                            {% if ticket.status_id == 10 %}未処理
-                            {% elif ticket.status_id == 20 %}保留
-                            {% elif ticket.status_id == 30 %}確認中
-                            {% elif ticket.status_id == 40 %}処理中
-                            {% elif ticket.status_id == 50 %}完了
-                            {% else %}不明
-                            {% endif %}
+                            {{ ticket.get_status_id_display }}
                         </div>
                     </div>
                     <div class="row mb-2">
@@ -100,15 +98,18 @@
             {% if ticket.attachments.all %}
             <ul class="list-group mb-4">
                 {% for attachment in ticket.attachments.all %}
-                <li class="list-group-item">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
                     <a href="{{ attachment.attachment_file.url }}" target="_blank">{{ attachment.attachment_file.name }}</a>
+                    <form method="post" action="{% url 'delete_attachment' attachment.id ticket.id %}" onsubmit="return confirm('Are you sure you want to delete this attachment?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">×</button>
+                    </form>
                 </li>
                 {% endfor %}
             </ul>
             {% else %}
             <p>No attachments available.</p>
             {% endif %}
-
             <!-- Comments Section -->
             <h3 class="my-4">Comments:</h3>
             <div class="list-group mb-4">
@@ -116,12 +117,29 @@
                 <div class="list-group-item">
                     <div class="row mb-2">
                         <div class="col-md-3"><strong>Comment:</strong></div>
-                        <div class="col-md-9">{{ comment.comment | linebreaksbr  }}</div>
+                        <div class="col-md-9">
+                            {{ comment.comment | markdown }}
+                        </div>
                     </div>
+                
                     {% if comment.attachment_file %}
                     <div class="row mb-2">
                         <div class="col-md-3"><strong>Attachment:</strong></div>
-                        <div class="col-md-9"><a href="{{ comment.attachment_file.url }}" target="_blank">{{ comment.attachment_file.name }}</a></div>
+                        <div class="col-md-9">
+                            {% if comment.attachment_file %}
+                                {% with comment.attachment_file.name|slice:"-4:" as ext %}
+                                    {% if ext in '.jpg,.jpeg,.png' %}
+                                        <a href="{{ comment.attachment_file.url }}" data-lightbox="comment-attachments" data-title="{{ comment.attachment_file.name }}">
+                                            <img src="{{ comment.attachment_file.url }}" alt="{{ comment.attachment_file.name }}" class="img-thumbnail" style="max-width: 200px; cursor: pointer;">
+                                        </a>
+                                    {% else %}
+                                        <a href="{{ comment.attachment_file.url }}" target="_blank">{{ comment.attachment_file.name }}</a>
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <p>No attachment</p>
+                            {% endif %}
+                        </div>
                     </div>
                     {% endif %}
                     <div class="row mb-2">
@@ -162,7 +180,52 @@
                 {{ form.as_p }}
                 <button type="submit" name="comment_form" class="btn btn-primary mt-2">Add Comment</button>
             </form>
+
         </div>
     </div>
 </div>
+<script>
+    document.querySelector('textarea').addEventListener('paste', function (e) {
+        const clipboardItems = e.clipboardData.items;
+        for (let i = 0; i < clipboardItems.length; i++) {
+            const item = clipboardItems[i];
+            if (item.type.indexOf('image') !== -1) {
+                const file = item.getAsFile();
+                uploadImage(file);
+            }
+        }
+    });
+
+    function uploadImage(file) {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        fetch("{% url 'upload_image' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                insertImageUrlInTextarea(data.url);
+            } else {
+                alert('Image upload failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    function insertImageUrlInTextarea(url) {
+        const textarea = document.querySelector('textarea');
+        const cursorPos = textarea.selectionStart;
+        const textBefore = textarea.value.substring(0, cursorPos);
+        const textAfter = textarea.value.substring(cursorPos);
+        textarea.value = textBefore + `\n![image](${url})\n` + textAfter;
+    }
+</script>
 {% endblock %}

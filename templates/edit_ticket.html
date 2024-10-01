@@ -97,14 +97,16 @@
                         {% endfor %}
                     </select>
                 </div>
+                
                 <!-- Attachments Field -->
                 <div class="mb-4">
                     <label class="form-label">Attachments</label>
-                    <input type="file" name="attachment_file" multiple class="form-control">
+                    <input type="file" name="attachment_files" multiple class="form-control">
                     {% if form.instance.pk %}
-                    <a href="{{ form.instance.attachment.attachment_file.url }}" class="d-block mt-2">{{ form.instance.attachment.attachment_file.name }}</a>
-                {% endif %}
-                {{ form.DELETE }}
+                        {% for attachment in form.instance.attachments.all %}
+                            <a href="{{ attachment.attachment_file.url }}" class="d-block mt-2">{{ attachment.attachment_file.name }}</a>
+                        {% endfor %}
+                    {% endif %}
                 </div>
 
                 <button type="submit" class="btn btn-primary">Save Changes</button>

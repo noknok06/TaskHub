@@ -59,8 +59,8 @@ class Ticket(models.Model):
     STATUS_CHOICES = [
         (10, '未処理'),
         (20, '保留'),
-        (30, '確認中'),
-        (40, '処理中'),
+        (30, '社内確認中'),
+        (40, 'ベンダー作業中'),
         (50, '完了'),
     ]
     title = models.CharField(max_length=255)
@@ -114,3 +114,7 @@ class Company(models.Model):
 
     def __str__(self):
         return self.name
+
+class CommentImage(models.Model):
+    image = models.ImageField(upload_to='comment_images/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)    

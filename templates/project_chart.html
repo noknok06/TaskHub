@@ -42,9 +42,13 @@
                     name: ticket.title,
                     start: ticket.start,
                     end: ticket.end,
-                    progress: 0,
+                    progress: ticket.category_name === 'Milestone' ? 0 : ticket.progress, // categoryがMilestoneならprogressを0に
                     ticket_id: ticket.ticket_id,
-                    custom_class: `status-${ticket.status_id}`
+                    category: ticket.category_name,
+                    dependencies: ticket.parent,
+                    companies: ticket.companies,
+                    custom_class: ticket.category_name === 'マイルストーン' ? 'milestone' : `status-${ticket.status_id}`,
+                    milestone: ticket.category_name === 'マイルストーン' // マイルストーンとして扱う
                 }));
 
                 let gantt = new Gantt("#gantt", tasks, {
@@ -52,10 +56,20 @@
                     date_format: 'YYYY-MM-DD',
                     custom_popup_html: function(task) {
                         return `
-                            <div class="popover-header">${task.name}</div>
-                            <div class="popover-body">
-                                <p>Start: ${task.start}</p>
-                                <p>End: ${task.end}</p>
+                            <style>
+                                .popup-wrapper{
+                                    width:20%;
+                                }
+                                p{
+                                    margin:0
+                                }
+                            </style>
+                            <div class="details-container">
+                              <h5>${task.name}</h5>
+                              <p>Category: ${task.category}</p>
+                              <p>Start: ${task.start}</p>
+                              <p>End: ${task.end}</p>
+                              <p>companies: ${task.companies}</p>
                             </div>
                         `;
                     },
@@ -82,18 +96,26 @@
                     gantt.change_view_mode('Month');
                 });
 
-                // CSSを動的に追加して、カスタムクラスに色を適用
+                // マイルストーンのCSSを追加
                 const style = document.createElement('style');
                 document.head.appendChild(style);
                 const sheet = style.sheet;
+                sheet.insertRule(`
+                    .gantt .milestone .bar {
+                        fill: red;
+                        stroke: black;
+                        stroke-width: 2px;
+                    }
+                `, sheet.cssRules.length);
+
                 Object.keys(statusColors).forEach(status_id => {
                     sheet.insertRule(`
                         .gantt .status-${status_id} .bar {
-                            fill: ${statusColors[status_id]};
+                            fill: ${statusColors[status_id]} !important;
                         }
                     `, sheet.cssRules.length);
                 });
-
+                
                 function updateTaskInDatabase(taskId, startDate, endDate) {
                     const startDateString = new Date(startDate).toISOString().split('T')[0];
                     const endDateString = new Date(endDate).toISOString().split('T')[0];
