@@ -4,6 +4,7 @@ from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite,
 from django.shortcuts import get_object_or_404, render, redirect
 from django.db.models import Count
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView, DetailView, TemplateView
 from django.views.decorators.http import require_POST
@@ -165,6 +166,18 @@ class UserProjectListView(ListView):
 
         return context
 
+@method_decorator(login_required, name='dispatch')
+class ProjectSearchView(View):
+    def get(self, request, *args, **kwargs):
+        search_query = request.GET.get('q', '')
+        if search_query:
+            projects = Project.objects.filter(name__icontains=search_query)
+        else:
+            projects = Project.objects.all()
+
+        results = [{'id': project.id, 'name': project.name} for project in projects]
+        return JsonResponse(results, safe=False)
+    
 @method_decorator(login_required, name='dispatch')
 class JoinProjectView(CreateView):
     model = UserProject

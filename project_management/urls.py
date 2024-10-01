@@ -2,7 +2,7 @@
 
 from django.urls import path
 from . import views
-from .views import ProjectCreateView, JoinProjectView, TicketListView, TicketCreateView, TicketDetailView, ProjectListView, TicketUpdateView, AttachmentDeleteView
+from .views import ProjectCreateView, JoinProjectView, TicketListView, TicketCreateView, TicketDetailView, ProjectListView, TicketUpdateView, AttachmentDeleteView, ProjectSearchView
 from .views import CategoryListView, CategoryCreateView, CategoryUpdateView, CategoryDeleteView, ProjectChartView, UserCreateView, ProjectAllChartView, UserProjectListView, LeaveProjectView, TicketsView, TicketDeleteView
 from .views import upload_image
 
@@ -30,5 +30,6 @@ urlpatterns = [
     path('leave_project/<int:project_id>/', LeaveProjectView.as_view(), name='leave_project'),
     path('attachment/<int:pk>/delete/<int:ticket_id>/', AttachmentDeleteView.as_view(), name='delete_attachment'),
     path('upload_image/', upload_image, name='upload_image'),
+    path('project/search/', ProjectSearchView.as_view(), name='project_search'),  # 追加
     
 ]
