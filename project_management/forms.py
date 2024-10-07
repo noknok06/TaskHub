@@ -1,7 +1,7 @@
 # project_management/forms.py
 
 from django import forms
-from .models import Project, UserProject, Ticket, TicketComment, CustomUser, Attachment, Category, UserProject, Project, Company
+from .models import Project, UserProject, Ticket, TicketComment, CustomUser, Attachment, Category, UserProject, Project, Company, Task
 
 
 class UserRegistrationForm(forms.ModelForm):
@@ -101,3 +101,8 @@ class AttachmentDeleteForm(forms.ModelForm):
     class Meta:
         model = Attachment
         fields = []  # フィールドは必要ありませんが、モデルを指定する必要があります            
+
+class TaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        fields = ['description']        

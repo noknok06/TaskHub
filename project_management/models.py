@@ -124,3 +124,11 @@ class Company(models.Model):
 class CommentImage(models.Model):
     image = models.ImageField(upload_to='comment_images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)    
+
+class Task(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='tasks')
+    description = models.CharField(max_length=255)
+    completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.description

@@ -1,6 +1,6 @@
 from .forms import JoinProjectForm, TicketForm, CommentForm, CategoryForm, TicketSearchForm
-from .forms import ProjectForm, UserRegistrationForm
-from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category, CustomUser, Company
+from .forms import ProjectForm, UserRegistrationForm, TaskForm
+from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category, CustomUser, Company, Task
 from django.shortcuts import get_object_or_404, render, redirect
 from django.db.models import Count
 from django.urls import reverse_lazy
@@ -341,7 +341,9 @@ class TicketDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        context['form'] = CommentForm()
+        context['form'] = CommentForm()  # Comment form for adding comments
+        context['task_form'] = TaskForm()  # Form for adding tasks
+        context['tasks'] = self.object.tasks.all()  # Fetch tasks related to the ticket
         context['is_favorite'] = TicketFavorite.objects.filter(ticket=self.object, user=user).exists()
         return context
 
@@ -349,8 +351,8 @@ class TicketDetailView(DetailView):
         self.object = self.get_object()
         user = request.user
 
+        # Handle comment form submission
         if 'comment_form' in request.POST:
-            # コメントの追加
             form = CommentForm(request.POST, request.FILES)
             if form.is_valid():
                 comment = form.save(commit=False)
@@ -359,17 +361,42 @@ class TicketDetailView(DetailView):
                 comment.save()
                 return redirect('ticket_detail', pk=self.object.pk)
         
+        # Handle task form submission (new task)
+        elif 'task_form' in request.POST:
+            task_form = TaskForm(request.POST)
+            if task_form.is_valid():
+                new_task = task_form.save(commit=False)
+                new_task.ticket = self.object
+                new_task.save()
+                return redirect('ticket_detail', pk=self.object.pk)
+
+        # Handle task completion toggle
+        elif 'complete_task' in request.POST:
+            task_id = request.POST.get('task_id')
+            task = Task.objects.get(id=task_id)
+            # Check if the task completion checkbox is present in the POST request
+            task.completed = 'complete_task' in request.POST
+            task.save()
+            return redirect('ticket_detail', pk=self.object.pk)
+
+        # Handle task deletion
+        elif 'delete_task' in request.POST:
+            task_id = request.POST.get('task_id')
+            task = Task.objects.get(id=task_id)
+            task.delete()
+            return redirect('ticket_detail', pk=self.object.pk)
+
+        # Handle favorite toggle
         elif 'is_favorite' in request.POST:
-            # お気に入りの切り替え
             is_favorite = request.POST.get('is_favorite') == 'true'
             if is_favorite:
                 TicketFavorite.objects.get_or_create(ticket=self.object, user=user)
             else:
                 TicketFavorite.objects.filter(ticket=self.object, user=user).delete()
-            
             return redirect('ticket_detail', pk=self.object.pk)
-        
+
         return self.render_to_response(self.get_context_data())
+
 
 class TicketDeleteView(DeleteView):
     model = Ticket

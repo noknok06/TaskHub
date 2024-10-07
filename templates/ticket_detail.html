@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load markdown_extras %}
+{% load crispy_forms_tags %}
 
 {% block title %}Ticket Detail{% endblock %}
 
@@ -92,6 +93,54 @@
                     </form>
                 </div>
             </div>
+
+            <!-- Form to Add New Task -->
+            <form method="post" class="mb-4">
+                
+                <h3 class="my-4">Task Checklist:</h3>
+
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-10">
+                        <!-- Make the description input field wider -->
+                        {{ task_form.description|as_crispy_field }}
+                    </div>
+                    <div class="col-md-2">
+                        <!-- Empty div to align the button properly -->
+                    <button type="submit" name="task_form" class="btn btn-primary" style="margin-top: 22px;"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Task List -->
+            {% if tasks %}
+                <ul class="list-group mb-4">
+                    {% for task in tasks %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <!-- Checkbox for Task Completion -->
+                                <form method="post" class="me-3 d-flex align-items-center">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="task_id" value="{{ task.id }}">
+                                    <input class="form-check-input me-2" type="checkbox" name="complete_task" value="1" {% if task.completed %}checked{% endif %} onChange="this.form.submit()">
+                                    <label class="form-check-label mb-0 {% if task.completed %}text-decoration-line-through{% endif %}">
+                                        {{ task.description }}
+                                    </label>
+                                </form>
+                            </div>
+                            <!-- Task Delete Button -->
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="task_id" value="{{ task.id }}">
+                                <button type="submit" name="delete_task" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No tasks available.</p>
+            {% endif %}
+
 
             <!-- Attachments Section -->
             <h3 class="my-4">Attachments:</h3>

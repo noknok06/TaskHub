@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'project_management',
+    'crispy_forms',
+    'crispy_bootstrap4',  # Add this line for Bootstrap 4 support
 ]
 
 MIDDLEWARE = [
@@ -142,3 +144,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+CRISPY_TEMPLATE_PACK = 'bootstrap4'  
