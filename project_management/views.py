@@ -21,6 +21,12 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import CommentImage
 from datetime import date
 
+STATUS_UNPROCESSED = 10
+STATUS_HOLD = 20
+STATUS_INWORK = 30
+STATUS_OUTWORK = 40
+STATUS_FINISH = 50
+
 class UserCreateView(CreateView):
     model = CustomUser
     form_class = UserRegistrationForm
@@ -47,11 +53,11 @@ def home(request):
 
     # ステータスIDとそのカウントを辞書形式で準備
     status_counts = {
-        10: 0,
-        20: 0,
-        30: 0,
-        40: 0,
-        50: 0
+        STATUS_UNPROCESSED: 0,
+        STATUS_HOLD: 0,
+        STATUS_INWORK: 0,
+        STATUS_OUTWORK: 0,
+        STATUS_FINISH: 0
     }
 
     for item in ticket_status_counts:
@@ -69,7 +75,7 @@ def home(request):
     overdue_tickets = Ticket.objects.filter(
         assignee=user,
         deadline__lt=datetime.date.today()
-    ).exclude(status_id=50)
+    ).exclude(status_id=STATUS_FINISH)
 
     context = {
         'user_projects': user_projects,
@@ -149,20 +155,30 @@ class UserProjectListView(ListView):
         for user_project in user_projects:
             project = user_project.project
 
-            # Use the correct relationship field 'project' to filter tickets
-            active_count = Ticket.objects.filter(project=project, status_id=10).count()
-            completed_count = Ticket.objects.filter(project=project, status_id=50).count()
-            pending_count = Ticket.objects.filter(project=project, status_id=20).count()
+            active_count = Ticket.objects.filter(project=project, status_id=STATUS_UNPROCESSED).count()
+            inwork_count = Ticket.objects.filter(project=project, status_id=STATUS_INWORK).count()
+            outwork_count = Ticket.objects.filter(project=project, status_id=STATUS_OUTWORK).count()
 
             project_status_counts[project.id] = {
                 'name': project.name,
                 'active_count': active_count,
-                'completed_count': completed_count,
-                'pending_count': pending_count,
+                'inwork_count': inwork_count,
+                'outwork_count': outwork_count,
             }
 
         # Pass the project status counts to the context
         context['project_status_counts'] = project_status_counts
+
+        # 新しくループしやすい形で情報を追加
+        context['project_list'] = [
+            {
+                'project': user_project.project,
+                'active_count': project_status_counts[user_project.project.id]['active_count'],
+                'inwork_count': project_status_counts[user_project.project.id]['inwork_count'],
+                'outwork_count': project_status_counts[user_project.project.id]['outwork_count']
+            }
+            for user_project in user_projects
+        ]
 
         return context
 
@@ -585,24 +601,6 @@ def update_task(request):
         messages.error('Failed to change date.')
         return JsonResponse({'status': 'error', 'message': 'Ticket not found'})
 
-@csrf_exempt
-@require_POST
-def update_task_progress(request):
-    import json
-    data = json.loads(request.body)
-    ticket_id = data.get('id')
-    progress = data.get('progress')
-    
-    # チケットの進捗更新
-    try:
-        ticket = Ticket.objects.get(id=ticket_id)
-        ticket.progress = progress
-        ticket.save()
-        return JsonResponse({'status': 'success'})
-    except Ticket.DoesNotExist:
-        messages.error('Failed to change date.')
-        return JsonResponse({'status': 'error', 'message': 'Ticket not found'})
-
 def create_ticket(request, project_id):
     project = get_object_or_404(Project, id=project_id)
     if request.method == 'POST':
@@ -643,7 +641,7 @@ class TicketsView(ListView):
 
         if form.is_valid():
             cleaned_data = form.cleaned_data
-            cleaned_data = cleaned_data.filter(project_id__in=project_ids)
+            # cleaned_data = cleaned_data.filter(project_id__in=project_ids)
             if cleaned_data.get('title'):
                 queryset = queryset.filter(title__icontains=cleaned_data['title'])
             

@@ -14,15 +14,30 @@
             <div class="card-header bg-dark text-light">
                 <h2 class="text-light">Projects</h2>
             </div>
-            <ul class="list-group list-group-flush">
-                {% for project in projects %}
-                    <li class="list-group-item"><a href="{% url 'ticket_list' project.id %}">{{ project.name }}</a></li>
-                    
-
-                {% empty %}
-                    <li class="list-group-item">No projects available.</li>
-                {% endfor %}
-            </ul>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                            <tr>
+                                <td><a href="{% url 'ticket_list' project.id %}">{{ project.name }}</a></td>
+                                <td>{{ project.start_date|date:"Y-m-j" }}</td>
+                                <td>{{ project.end_date|date:"Y-m-j" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No projects available.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 {% endblock %}

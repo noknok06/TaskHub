@@ -3,6 +3,12 @@ from django.views.generic import CreateView
 from django.db import models
 from django.conf import settings
 
+STATUS_UNPROCESSED = 10
+STATUS_HOLD = 20
+STATUS_INWORK = 30
+STATUS_OUTWORK = 40
+STATUS_FINISH = 50
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -57,11 +63,11 @@ class UserProject(models.Model):
 
 class Ticket(models.Model):
     STATUS_CHOICES = [
-        (10, '未処理'),
-        (20, '保留'),
-        (30, '社内確認中'),
-        (40, 'ベンダー作業中'),
-        (50, '完了'),
+        (STATUS_UNPROCESSED, '未処理'),
+        (STATUS_HOLD, '保留'),
+        (STATUS_INWORK, '社内確認中'),
+        (STATUS_OUTWORK, 'ベンダー作業中'),
+        (STATUS_FINISH, '完了'),
     ]
     title = models.CharField(max_length=255)
     detail = models.TextField(blank=True, null=True)

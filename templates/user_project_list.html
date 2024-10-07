@@ -14,17 +14,29 @@
         </div>
         <div class="card-body">
             <table class="table">
-                <tbody>
-                    {% for user_project in user_projects %}
+                <thead>
                     <tr>
-                        <td><a href="{% url 'ticket_list' user_project.project.id %}">{{ user_project.project.name }}</a></td>
+                        <th>Project</th>
+                        <th>未処理</th>
+                        <th>社内処理</th>
+                        <th>社外処理</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in project_list %}
+                    <tr>
+                        <td><a href="{% url 'ticket_list' project.project.id %}">{{ project.project.name }}</a></td>
+                        <td>{{ project.active_count }}</td>
+                        <td>{{ project.inwork_count }}</td>
+                        <td>{{ project.outwork_count }}</td>
                         <td>
-                            <a href="{% url 'leave_project' project_id=user_project.project.id %}" class="btn btn-danger btn-sm">×</a>
+                            <a href="{% url 'leave_project' project_id=project.project.id %}" class="btn btn-danger btn-sm">×</a>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="2">No projects available.</td>
+                        <td colspan="5">No projects available.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
