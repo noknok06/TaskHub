@@ -374,11 +374,11 @@ class TicketDetailView(DetailView):
         elif 'complete_task' in request.POST:
             task_id = request.POST.get('task_id')
             task = Task.objects.get(id=task_id)
-            # Check if the task completion checkbox is present in the POST request
-            task.completed = 'complete_task' in request.POST
+            # 完了状態をPOSTリクエストから取得して更新
+            task.completed = request.POST.get('complete_task') == '1'
             task.save()
             return redirect('ticket_detail', pk=self.object.pk)
-
+        
         # Handle task deletion
         elif 'delete_task' in request.POST:
             task_id = request.POST.get('task_id')

@@ -118,11 +118,14 @@
                     {% for task in tasks %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
-                                <!-- Checkbox for Task Completion -->
+                                <!-- タスク完了のチェックボックス -->
                                 <form method="post" class="me-3 d-flex align-items-center">
                                     {% csrf_token %}
                                     <input type="hidden" name="task_id" value="{{ task.id }}">
-                                    <input class="form-check-input me-2" type="checkbox" name="complete_task" value="1" {% if task.completed %}checked{% endif %} onChange="this.form.submit()">
+                                    <!-- 隠しフィールドでデフォルトは未完了（False）を送信 -->
+                                    <input type="hidden" name="complete_task" value="0">
+                                    <!-- チェックボックスが選択されたら1を送信 -->
+                                    <input class="form-check-input me-2" type="checkbox" value="1" {% if task.completed %}checked{% endif %} onChange="this.form.submit(); this.previousElementSibling.value = this.checked ? '1' : '0';">
                                     <label class="form-check-label mb-0 {% if task.completed %}text-decoration-line-through{% endif %}">
                                         {{ task.description }}
                                     </label>
@@ -132,7 +135,7 @@
                             <form method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="task_id" value="{{ task.id }}">
-                                <button type="submit" name="delete_task" class="btn btn-danger btn-sm">Delete</button>
+                                <button type="submit" name="delete_task" class="btn btn-danger btn-sm">削除</button>
                             </form>
                         </li>
                     {% endfor %}
