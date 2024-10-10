@@ -1,6 +1,7 @@
-from .forms import JoinProjectForm, TicketForm, CommentForm, CategoryForm, TicketSearchForm
-from .forms import ProjectForm, UserRegistrationForm, TaskForm
-from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite, Attachment, Category, CustomUser, Company, Task
+from .forms import TicketForm, CommentForm, CategoryForm, TicketSearchForm
+from .forms import UserRegistrationForm, TaskForm
+from .models import Project, UserProject, Ticket, TicketComment, TicketFavorite
+from .models import CommentImage, Attachment, Category, CustomUser, Company, Task
 from django.shortcuts import get_object_or_404, render, redirect
 from django.db.models import Count
 from django.urls import reverse_lazy
@@ -15,17 +16,11 @@ from django.utils.dateparse import parse_date
 from django.http import JsonResponse
 from django.contrib import messages
 from django.utils.decorators import method_decorator
-import datetime, json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import CommentImage
 from datetime import date
-
-STATUS_UNPROCESSED = 10
-STATUS_HOLD = 20
-STATUS_INWORK = 30
-STATUS_OUTWORK = 40
-STATUS_FINISH = 50
+import datetime, json
+from .constants import STATUS_FINISH,STATUS_HOLD,STATUS_INWORK,STATUS_OUTWORK,STATUS_UNPROCESSED
 
 class UserCreateView(CreateView):
     model = CustomUser
@@ -397,7 +392,6 @@ class TicketDetailView(DetailView):
 
         return self.render_to_response(self.get_context_data())
 
-
 class TicketDeleteView(DeleteView):
     model = Ticket
     success_url = reverse_lazy('ticket_list')  # 削除後にリダイレクトするURL
@@ -602,31 +596,31 @@ class ProjectAllChartView(TemplateView):
         return context
 
         
-@csrf_exempt
-@require_POST
-def update_task(request):
-    import json
-    data = json.loads(request.body)
-    ticket_id = data.get('id')
-    start_date = data.get('start_date')
-    # 文字列をdatetimeオブジェクトに変換
-    date_obj = datetime.datetime.strptime(start_date, "%Y-%m-%d")
-    # 1日進める
-    new_date_obj = date_obj + datetime.timedelta(days=1)
-    # 再び文字列に戻す
-    start_date = new_date_obj.strftime("%Y-%m-%d")
-    end_date = data.get('end_date')
+# @csrf_exempt
+# @require_POST
+# def update_task(request):
+#     import json
+#     data = json.loads(request.body)
+#     ticket_id = data.get('id')
+#     start_date = data.get('start_date')
+#     # 文字列をdatetimeオブジェクトに変換
+#     date_obj = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+#     # 1日進める
+#     new_date_obj = date_obj + datetime.timedelta(days=1)
+#     # 再び文字列に戻す
+#     start_date = new_date_obj.strftime("%Y-%m-%d")
+#     end_date = data.get('end_date')
     
-    # チケットの更新
-    try:
-        ticket = Ticket.objects.get(title=ticket_id)
-        ticket.start_date = start_date
-        ticket.end_date = end_date
-        ticket.save()
-        return JsonResponse({'status': 'success'})
-    except Ticket.DoesNotExist:
-        messages.error('Failed to change date.')
-        return JsonResponse({'status': 'error', 'message': 'Ticket not found'})
+#     # チケットの更新
+#     try:
+#         ticket = Ticket.objects.get(title=ticket_id)
+#         ticket.start_date = start_date
+#         ticket.end_date = end_date
+#         ticket.save()
+#         return JsonResponse({'status': 'success'})
+#     except Ticket.DoesNotExist:
+#         messages.error('Failed to change date.')
+#         return JsonResponse({'status': 'error', 'message': 'Ticket not found'})
 
 def create_ticket(request, project_id):
     project = get_object_or_404(Project, id=project_id)
@@ -708,3 +702,24 @@ def upload_image(request):
         image_instance = CommentImage.objects.create(image=image)
         return JsonResponse({'success': True, 'url': image_instance.image.url})
     return JsonResponse({'success': False})    
+
+
+def toggle_task_completion(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            task_id = data.get('task_id')
+            completed = data.get('completed')
+
+            # タスクを取得
+            task = Task.objects.get(id=task_id)
+            task.completed = completed
+            task.save()
+
+            return JsonResponse({'success': True})
+        except Task.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Task not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)

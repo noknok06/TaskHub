@@ -24,10 +24,11 @@ urlpatterns = [
     path('projects/<int:project_id>/categories/<int:pk>/delete/', CategoryDeleteView.as_view(), name='category_delete'),
     path('projects/<int:pk>/chart/', ProjectChartView.as_view(), name='project_chart'),
     path('projects/chart/', ProjectAllChartView.as_view(), name='project_all_chart'),
-    path('update-task/', views.update_task, name='update_task'),
+    # path('update-task/', views.update_task, name='update_task'),
     path('my_projects/', UserProjectListView.as_view(), name='user_project_list'),
     path('leave_project/<int:project_id>/', LeaveProjectView.as_view(), name='leave_project'),
     path('attachment/<int:pk>/delete/<int:ticket_id>/', AttachmentDeleteView.as_view(), name='delete_attachment'),
     path('upload_image/', upload_image, name='upload_image'),
     path('search_projects/', views.search_projects, name='search_projects'),
+    path('toggle-task-completion/', views.toggle_task_completion, name='toggle_task_completion'),
 ]

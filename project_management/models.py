@@ -2,12 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.views.generic import CreateView
 from django.db import models
 from django.conf import settings
-
-STATUS_UNPROCESSED = 10
-STATUS_HOLD = 20
-STATUS_INWORK = 30
-STATUS_OUTWORK = 40
-STATUS_FINISH = 50
+from .constants import STATUS_FINISH,STATUS_HOLD,STATUS_INWORK,STATUS_OUTWORK,STATUS_UNPROCESSED
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -127,8 +122,8 @@ class CommentImage(models.Model):
 
 class Task(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='tasks')
-    description = models.CharField(max_length=255)
+    task = models.CharField(max_length=255)
     completed = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.description
+        return self.task

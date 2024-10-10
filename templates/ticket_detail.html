@@ -84,15 +84,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Remove Ticket Button -->
-            <div class="row mt-4">
-                <div class="col-md-12">
-                    <form method="post" action="{% url 'delete_ticket' pk=ticket.id %}" onsubmit="return confirm('Are you sure you want to delete this ticket?');">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Delete Ticket</button>
-                    </form>
-                </div>
-            </div>
 
             <!-- Form to Add New Task -->
             <form method="post" class="mb-4">
@@ -103,7 +94,7 @@
                 <div class="row">
                     <div class="col-md-10">
                         <!-- Make the description input field wider -->
-                        {{ task_form.description|as_crispy_field }}
+                        {{ task_form.task|as_crispy_field }}
                     </div>
                     <div class="col-md-2">
                         <!-- Empty div to align the button properly -->
@@ -119,19 +110,12 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
                                 <!-- タスク完了のチェックボックス -->
-                                <form method="post" class="me-3 d-flex align-items-center">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="task_id" value="{{ task.id }}">
-                                    <!-- 隠しフィールドでデフォルトは未完了（False）を送信 -->
-                                    <input type="hidden" name="complete_task" value="0">
-                                    <!-- チェックボックスが選択されたら1を送信 -->
-                                    <input class="form-check-input me-2" type="checkbox" value="1" {% if task.completed %}checked{% endif %} onChange="this.form.submit(); this.previousElementSibling.value = this.checked ? '1' : '0';">
-                                    <label class="form-check-label mb-0 {% if task.completed %}text-decoration-line-through{% endif %}">
-                                        {{ task.description }}
-                                    </label>
-                                </form>
+                                <input class="form-check-input me-2" type="checkbox" value="1" data-task-id="{{ task.id }}" {% if task.completed %}checked{% endif %} onchange="toggleTaskCompletion(this)">
+                                <label class="form-check-label mb-0 {% if task.completed %}text-decoration-line-through{% endif %}">
+                                    {{ task.task }}
+                                </label>
                             </div>
-                            <!-- Task Delete Button -->
+                            <!-- タスク削除ボタン -->
                             <form method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="task_id" value="{{ task.id }}">
@@ -141,7 +125,7 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>No tasks available.</p>
+                <p>タスクがありません。</p>
             {% endif %}
 
 
@@ -206,7 +190,7 @@
         </div>
 
         <!-- Favorites Section -->
-        <div class="col-md-4">
+        <div class="col-md-3" style="margin-left: 20px;">
             <h3 class="my-4">Favorites:</h3>
             <form method="post">
                 {% csrf_token %}
@@ -233,6 +217,15 @@
                 <button type="submit" name="comment_form" class="btn btn-primary mt-2">Add Comment</button>
             </form>
 
+            <!-- Remove Ticket Button -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <form method="post" action="{% url 'delete_ticket' pk=ticket.id %}" onsubmit="return confirm('Are you sure you want to delete this ticket?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete Ticket</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -278,6 +271,35 @@
         const textBefore = textarea.value.substring(0, cursorPos);
         const textAfter = textarea.value.substring(cursorPos);
         textarea.value = textBefore + `\n![image](${url})\n` + textAfter;
+    }
+
+    function toggleTaskCompletion(checkbox) {
+        const taskId = checkbox.getAttribute('data-task-id');
+        const isCompleted = checkbox.checked;
+
+        // Fetch APIで非同期リクエストを送信
+        fetch("{% url 'toggle_task_completion' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                'task_id': taskId,
+                'completed': isCompleted
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Task updated successfully.');
+            } else {
+                console.error('Task update failed.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     }
 </script>
 {% endblock %}
