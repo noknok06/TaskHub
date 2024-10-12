@@ -1,98 +1,120 @@
-<style>
-    /* 既存のスタイル */
-    body {
-        background-color: #f4f5f7;
-    }
-    header {
-        background-color: #333a3f;
-        color: #ffffff;
-        height: 60px;
-        padding: 0 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        z-index: 1005; /* ヘッダーの z-index */
-    }
-    .navbar-brand {
-        font-size: 1.5rem;
-        color: #ffffff;
-        text-decoration: none;
-    }
-    .sidebar {
-        background-color: #292e33;
-        color: #ffffff;
-        padding-top: 80px;
-        transition: transform 0.3s ease-in-out;
-        transform: translateX(0);
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 250px; /* Sidebar width */
-        z-index: 1001; /* Sidebarの z-index (ヘッダーよりも上) */
-    }
-    .sidebar ul {
-        padding: 0;
-        list-style-type: none;
-    }
-    .sidebar ul li {
-        padding: 15px 20px;
-    }
-    .sidebar ul li a {
-        color: #ffffff;
-        text-decoration: none;
-        display: block;
-    }
-    .sidebar ul li a:hover {
-        background-color: #1c1f22;
-        border-radius: 4px;
-    }
-    .main-content {
-        margin-left: 250px;
-        padding: 80px 20px 20px;
-        background-color: #ffffff;
-        border-radius: 4px;
-        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        transition: margin-left 0.3s ease-in-out;
-    }
-    .btn-primary {
-        background-color: #1c7ed6;
-        border-color: #1c7ed6;
-    }
-    .btn-primary:hover {
-        background-color: #1864ab;
-        border-color: #1864ab;
-    }
+/* 既存のスタイル */
+body {
+    background-color: #f4f5f7;
+}
 
-    /* Sidebar内のナビゲーションボタン */
-    .sidebar .navbar-toggler {
-        position: fixed;
-        top: 60px; /* Sidebarの上からの距離 */
-        right: -23px; /* Sidebarの右からの距離 */
-        z-index: 1002; /* ヘッダーやサイドバーの上に表示 */
-        background-color: #292e33;
-    }
+header {
+    background-color: #333a3f;
+    color: #ffffff;
+    height: 60px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1005;
+    /* ヘッダーの z-index */
+}
 
-    /* サイドバーが隠れているときのスタイル */
-    .sidebar.hidden {
-        transform: translateX(-250px); /* Sidebarが隠れる */
-    }
+.navbar-brand {
+    font-size: 1.5rem;
+    color: #ffffff;
+    text-decoration: none;
+}
 
-    .main-content.full {
-        margin-left: 0; /* Sidebarが隠れるとメインコンテンツの余白も調整 */
-    }
-    .dropzone {
-        border: 2px dashed #007bff;
-        padding: 20px;
-        text-align: center;
-        cursor: pointer;
-    }
-    .dropzone.dragover {
-        border-color: #0056b3;
-        background-color: #e9ecef;
-    }    
-</style>
+.sidebar {
+    background-color: #292e33;
+    color: #ffffff;
+    padding-top: 80px;
+    transition: transform 0.3s ease-in-out;
+    transform: translateX(0);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 250px;
+    /* Sidebar width */
+    z-index: 1001;
+    /* Sidebarの z-index (ヘッダーよりも上) */
+}
+
+.sidebar ul {
+    padding: 0;
+    list-style-type: none;
+}
+
+.sidebar ul li {
+    padding: 15px 20px;
+}
+
+.sidebar ul li a {
+    color: #ffffff;
+    text-decoration: none;
+    display: block;
+}
+
+.sidebar ul li a:hover {
+    background-color: #1c1f22;
+    border-radius: 4px;
+}
+
+.main-content {
+    margin-left: 250px;
+    padding: 80px 20px 20px;
+    background-color: #ffffff;
+    border-radius: 4px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    transition: margin-left 0.3s ease-in-out;
+}
+
+.btn-primary {
+    background-color: #1c7ed6;
+    border-color: #1c7ed6;
+}
+
+.btn-primary:hover {
+    background-color: #1864ab;
+    border-color: #1864ab;
+}
+
+/* Sidebar内のナビゲーションボタン */
+.sidebar .navbar-toggler {
+    position: fixed;
+    top: 60px;
+    /* Sidebarの上からの距離 */
+    right: -23px;
+    /* Sidebarの右からの距離 */
+    z-index: 1002;
+    /* ヘッダーやサイドバーの上に表示 */
+    background-color: #292e33;
+}
+
+/* サイドバーが隠れているときのスタイル */
+.sidebar.hidden {
+    transform: translateX(-250px);
+    /* Sidebarが隠れる */
+}
+
+.main-content.full {
+    margin-left: 0;
+    /* Sidebarが隠れるとメインコンテンツの余白も調整 */
+}
+
+.dropzone {
+    border: 2px dashed #007bff;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.dropzone.dragover {
+    border-color: #0056b3;
+    background-color: #e9ecef;
+}
+
+.comment_text img{
+    width: 100%;
+}

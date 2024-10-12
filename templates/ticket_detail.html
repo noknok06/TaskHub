@@ -110,47 +110,6 @@
             {% else %}
             <p>No attachments available.</p>
             {% endif %}
-            <!-- Comments Section -->
-            <h3 class="my-4">Comments:</h3>
-            <div class="list-group mb-4">
-                {% for comment in ticket.ticketcomment_set.all %}
-                <div class="list-group-item">
-                    <div class="row mb-2">
-                        <div class="col-md-3"><strong>Comment:</strong></div>
-                        <div class="col-md-9">
-                            {{ comment.comment | markdown }}
-                        </div>
-                    </div>
-                
-                    {% if comment.attachment_file %}
-                    <div class="row mb-2">
-                        <div class="col-md-3"><strong>Attachment:</strong></div>
-                        <div class="col-md-9">
-                            {% if comment.attachment_file %}
-                                {% with comment.attachment_file.name|slice:"-4:" as ext %}
-                                    {% if ext in '.jpg,.jpeg,.png' %}
-                                        <a href="{{ comment.attachment_file.url }}" data-lightbox="comment-attachments" data-title="{{ comment.attachment_file.name }}">
-                                            <img src="{{ comment.attachment_file.url }}" alt="{{ comment.attachment_file.name }}" class="img-thumbnail" style="max-width: 200px; cursor: pointer;">
-                                        </a>
-                                    {% else %}
-                                        <a href="{{ comment.attachment_file.url }}" target="_blank">{{ comment.attachment_file.name }}</a>
-                                    {% endif %}
-                                {% endwith %}
-                            {% else %}
-                                <p>No attachment</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endif %}
-                    <div class="row mb-2">
-                        <div class="col-md-3"><strong>Posted by:</strong></div>
-                        <div class="col-md-9">{{ comment.user.name }} on {{ comment.create_date }}</div>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="list-group-item">No comments available.</div>
-                {% endfor %}
-            </div>
         </div>
 
         <!-- Favorites Section -->
@@ -182,6 +141,47 @@
             </form>
 
         </div>
+    </div>
+    <!-- Comments Section -->
+    <h3 class="my-4">Comments:</h3>
+    <div class="list-group mb-4">
+        {% for comment in ticket.ticketcomment_set.all %}
+        <div class="list-group-item">
+            <div class="row mb-2">
+                <div class="col-md-2"><strong>Comment:</strong></div>
+                <div class="col-md-8 comment_text">
+                    {{ comment.comment | markdown }}
+                </div>
+            </div>
+        
+            {% if comment.attachment_file %}
+            <div class="row mb-2">
+                <div class="col-md-3"><strong>Attachment:</strong></div>
+                <div class="col-md-9">
+                    {% if comment.attachment_file %}
+                        {% with comment.attachment_file.name|slice:"-4:" as ext %}
+                            {% if ext in '.jpg,.jpeg,.png' %}
+                                <a href="{{ comment.attachment_file.url }}" data-lightbox="comment-attachments" data-title="{{ comment.attachment_file.name }}">
+                                    <img src="{{ comment.attachment_file.url }}" alt="{{ comment.attachment_file.name }}" class="img-thumbnail" style="max-width: 200px; cursor: pointer;">
+                                </a>
+                            {% else %}
+                                <a href="{{ comment.attachment_file.url }}" target="_blank">{{ comment.attachment_file.name }}</a>
+                            {% endif %}
+                        {% endwith %}
+                    {% else %}
+                        <p>No attachment</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            <div class="row mb-2">
+                <div class="col-md-2"><strong>Posted by:</strong></div>
+                <div class="col-md-8">{{ comment.user.name }} on {{ comment.create_date }}</div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="list-group-item">No comments available.</div>
+        {% endfor %}
     </div>
 </div>
 <script>
