@@ -118,3 +118,18 @@ header {
 .comment_text img{
     width: 100%;
 }
+
+/* ヘッダーのサイドバートグルボタンのスタイル */
+.toggle-sidebar {
+    background-color: #333a3f;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    margin-right: 10px;
+}
+
+/* メインコンテンツの左上ボタンを非表示にする（移動したため） */
+#mainToggle {
+    display: none;
+}

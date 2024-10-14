@@ -21,22 +21,20 @@
 </head>
 <body>
     <header class="d-flex justify-content-between align-items-center p-3">
-        <a class="navbar-brand" href="{% url 'home' %}">Project Management</a>
+        <div class="d-flex align-items-center">
+            <button class="toggle-sidebar" id="headerToggle" onclick="toggleSidebar()">&#171;</button>
+            <a class="navbar-brand" href="{% url 'home' %}">Project Management</a>
+        </div>
         <div>
             {% if user.is_authenticated %}
-                <span>Welcome, {{ user.name }}!</span>
-                <!-- Add a logout link if desired -->
-                <a href="{% url 'logout' %}" class="btn btn-link">Logout</a>
+                <span>user: {{ user.name }}</span>
+                <a href="{% url 'logout' %}" class="btn btn-link"><i style="color: beige;" class="fa-solid fa-right-from-bracket"></i></a>
             {% else %}
                 <a href="{% url 'login' %}" class="btn btn-link">Login</a>
             {% endif %}
         </div>
     </header>
-
     <div class="sidebar" id="sidebar">
-        <button class="navbar-toggler toggler btn btn-secondary" type="button" id="toggleSidebar">
-            <span class="navbar-toggler-icon">⇔</span>
-        </button>
         <nav class="nav flex-column">
             <ul>
                 <li><a href="{% url 'home' %}">HOME</a></li>
@@ -55,14 +53,25 @@
             {% endblock %}
         </div>
     </main>
-
     <script>
-        document.getElementById('toggleSidebar').addEventListener('click', function() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('mainContent');
-            sidebar.classList.toggle('hidden');
-            mainContent.classList.toggle('full');
-        });
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const mainContent = document.getElementById("mainContent");
+            const headerToggle = document.getElementById("headerToggle");
+
+            if (sidebar.classList.contains("hidden")) {
+                // サイドバーを表示する
+                sidebar.classList.remove("hidden");
+                mainContent.classList.remove("full");
+                headerToggle.innerHTML = "&#171;"; // ×アイコン
+            } else {
+                // サイドバーを隠す
+                sidebar.classList.add("hidden");
+                mainContent.classList.add("full");
+                headerToggle.innerHTML = "&#9776;"; // ☰アイコン
+            }
+        }
     </script>
+        
 </body>
 </html>
