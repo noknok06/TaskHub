@@ -596,31 +596,31 @@ class ProjectAllChartView(TemplateView):
         return context
 
         
-# @csrf_exempt
-# @require_POST
-# def update_task(request):
-#     import json
-#     data = json.loads(request.body)
-#     ticket_id = data.get('id')
-#     start_date = data.get('start_date')
-#     # 文字列をdatetimeオブジェクトに変換
-#     date_obj = datetime.datetime.strptime(start_date, "%Y-%m-%d")
-#     # 1日進める
-#     new_date_obj = date_obj + datetime.timedelta(days=1)
-#     # 再び文字列に戻す
-#     start_date = new_date_obj.strftime("%Y-%m-%d")
-#     end_date = data.get('end_date')
+@csrf_exempt
+@require_POST
+def update_task(request):
+    import json
+    data = json.loads(request.body)
+    ticket_id = data.get('id')
+    start_date = data.get('start_date')
+    # 文字列をdatetimeオブジェクトに変換
+    date_obj = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+    # 1日進める
+    new_date_obj = date_obj + datetime.timedelta(days=1)
+    # 再び文字列に戻す
+    start_date = new_date_obj.strftime("%Y-%m-%d")
+    end_date = data.get('end_date')
     
-#     # チケットの更新
-#     try:
-#         ticket = Ticket.objects.get(title=ticket_id)
-#         ticket.start_date = start_date
-#         ticket.end_date = end_date
-#         ticket.save()
-#         return JsonResponse({'status': 'success'})
-#     except Ticket.DoesNotExist:
-#         messages.error('Failed to change date.')
-#         return JsonResponse({'status': 'error', 'message': 'Ticket not found'})
+    # チケットの更新
+    try:
+        ticket = Ticket.objects.get(title=ticket_id)
+        ticket.start_date = start_date
+        ticket.end_date = end_date
+        ticket.save()
+        return JsonResponse({'status': 'success'})
+    except Ticket.DoesNotExist:
+        messages.error('Failed to change date.')
+        return JsonResponse({'status': 'error', 'message': 'Ticket not found'})
 
 def create_ticket(request, project_id):
     project = get_object_or_404(Project, id=project_id)

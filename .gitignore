@@ -5,3 +5,4 @@ project_management/migrations/
 db.sqlite3
 project_management/templatetags/__pycache__/
 venv/
+db - コピー.sqlite3
